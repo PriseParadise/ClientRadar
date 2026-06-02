@@ -1,0 +1,3882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ventas.app</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f1117;--bg2:#181b24;--bg3:#1e2130;
+  --border:#2a2d3e;--border2:#353849;
+  --text:#e8eaf0;--text2:#8b8fa8;--text3:#5a5e76;
+  --accent:#4f7cff;--accent2:#3d62d4;
+  --green:#34c77b;--red:#f04f5a;--orange:#f5a623;
+  --radius:10px;--radius-sm:6px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;overflow:hidden;}
+
+/* ── LOGIN / USER SCREEN ── */
+.screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;}
+.screen.hidden{display:none;}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:36px 40px;width:380px;}
+.login-logo{font-size:22px;font-weight:600;letter-spacing:-.5px;margin-bottom:28px;text-align:center;}
+.login-logo span{color:var(--accent);}
+.login-section{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.user-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;max-height:220px;overflow-y:auto;}
+.user-btn{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);cursor:pointer;transition:all .15s;width:100%;}
+.user-btn:hover{border-color:var(--accent);background:rgba(79,124,255,.07);}
+.user-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+.user-info{text-align:left;flex:1;}
+.user-name{font-size:13px;font-weight:500;color:var(--text);}
+.user-meta{font-size:10.5px;color:var(--text3);margin-top:1px;}
+.user-del{color:var(--text3);font-size:16px;padding:4px 8px;border-radius:4px;cursor:pointer;opacity:0;transition:opacity .15s;}
+.user-btn:hover .user-del{opacity:1;}
+.user-del:hover{color:var(--red);background:rgba(240,79,90,.12);}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.new-user-form{display:flex;gap:8px;}
+.input{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-size:12px;font-family:var(--font);outline:none;flex:1;}
+.input:focus{border-color:var(--accent);}
+.input::placeholder{color:var(--text3);}
+
+/* ── APP LAYOUT ── */
+.app{display:flex;height:100vh;}
+.sidebar{width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;}
+.sidebar-logo{padding:0 18px 16px;font-size:15px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);margin-bottom:16px;letter-spacing:-.4px;}
+.sidebar-logo span{color:var(--accent);}
+.sidebar-user{padding:0 18px 14px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.su-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.su-name{font-size:12px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.su-logout{color:var(--text3);font-size:14px;cursor:pointer;padding:3px 5px;border-radius:4px;transition:all .15s;}
+.su-logout:hover{color:var(--red);background:rgba(240,79,90,.1);}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-size:12.5px;color:var(--text2);cursor:pointer;transition:all .15s;border-left:2px solid transparent;user-select:none;}
+.nav-item:hover{color:var(--text);background:var(--bg3);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(79,124,255,.07);font-weight:500;}
+.nav-icon{font-size:15px;}
+.sidebar-bottom{margin-top:auto;padding:14px 18px 0;border-top:1px solid var(--border);font-size:11px;color:var(--text3);line-height:1.7;}
+.alert-badge{margin-left:auto;background:rgba(240,79,90,.2);color:var(--red);font-size:10px;padding:1px 6px;border-radius:10px;}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;}
+.topbar-title{font-size:15px;font-weight:600;letter-spacing:-.3px;white-space:nowrap;}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.content{padding:22px 24px;flex:1;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:var(--font);white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{color:var(--text);background:var(--border);}
+.btn-danger{background:rgba(240,79,90,.12);color:var(--red);border:1px solid rgba(240,79,90,.2);}
+.btn-danger:hover{background:rgba(240,79,90,.22);}
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,124,255,.07);}
+.upload-icon{font-size:32px;margin-bottom:10px;}
+.upload-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--text3);}
+#file-input{display:none;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.card-title{font-size:10.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi-val{font-size:23px;font-weight:600;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.kpi-badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;margin-top:5px;}
+.up{background:rgba(52,199,123,.15);color:var(--green);}
+.down{background:rgba(240,79,90,.15);color:var(--red);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-label{font-size:11px;color:var(--text3);}
+.filter-select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:var(--radius-sm);font-size:12px;font-family:var(--font);cursor:pointer;outline:none;}
+.filter-select:focus{border-color:var(--accent);}
+.filter-pill{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .15s;user-select:none;}
+.filter-pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{font-size:10.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;position:sticky;top:0;background:var(--bg2);z-index:1;}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
+tbody td:first-child{color:var(--text);}
+tbody tr:hover td{background:var(--bg3);}
+tbody tr:last-child td{border-bottom:none;}
+.td-right{text-align:right;font-family:var(--mono);font-size:11.5px;}
+.td-green{color:var(--green);}
+.td-red{color:var(--red);}
+/* ── ALERT RADAR — new alert system styles ── */
+/* ── ALERT SYSTEM v3 — card format, no tables ──────────────────────────── */
+.al-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+.al-filter-group{display:flex;align-items:center;gap:6px;}
+.al-filter-label{font-size:11px;color:var(--text3);white-space:nowrap;}
+.al-input{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:5px 9px;border-radius:var(--radius-sm);font-size:12px;font-family:var(--mono);outline:none;width:80px;}
+.al-input:focus{border-color:var(--accent);}
+.al-sep{width:1px;height:20px;background:var(--border2);margin:0 2px;flex-shrink:0;}
+.al-pill{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .12s;user-select:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
+.al-pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.al-pill.t-gone.active{background:var(--red);border-color:var(--red);}
+.al-pill.t-risk.active{background:rgba(240,79,90,.8);border-color:var(--red);}
+.al-pill.t-ref.active{background:rgba(245,166,35,.85);border-color:var(--orange);color:#111;}
+.al-pill.t-opp.active{background:rgba(52,199,123,.85);border-color:var(--green);color:#0a1f12;}
+.al-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.al-sum-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:4px;}
+.al-sum-card.t-gone{border-color:rgba(240,79,90,.4);background:rgba(240,79,90,.05);}
+.al-sum-card.t-risk{border-color:rgba(240,79,90,.25);}
+.al-sum-card.t-ref{border-color:rgba(245,166,35,.3);}
+.al-sum-card.t-opp{border-color:rgba(52,199,123,.3);}
+.al-sum-val{font-size:22px;font-weight:600;font-family:var(--mono);letter-spacing:-.5px;}
+.al-sum-val.gone{color:var(--red);}
+.al-sum-val.risk{color:var(--red);}
+.al-sum-val.ref{color:var(--orange);}
+.al-sum-val.opp{color:var(--green);}
+.al-sum-label{font-size:10.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.al-sum-sub{font-size:10.5px;color:var(--text3);}
+.al-tramo{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:11.5px;color:var(--text2);margin-bottom:14px;flex-wrap:wrap;}
+.al-tramo strong{color:var(--text);}
+.al-section-label{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:16px 0 8px;display:flex;align-items:center;gap:8px;}
+.al-section-label::after{content:"";flex:1;height:1px;background:var(--border);}
+.al-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;transition:border-color .15s;}
+.al-card:hover{border-color:var(--border2);}
+.al-card.gone{border-left:3px solid var(--red);}
+.al-card.risk{border-left:3px solid rgba(240,79,90,.7);}
+.al-card.ref{border-left:3px solid var(--orange);}
+.al-card.opp{border-left:3px solid var(--green);}
+.al-card-inner{padding:13px 15px;display:flex;align-items:flex-start;gap:14px;}
+.al-card-icon{font-size:15px;flex-shrink:0;margin-top:2px;}
+.al-card-body{flex:1;min-width:0;}
+.al-card-top{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;}
+.al-type-badge{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.al-type-badge.gone{background:rgba(240,79,90,.15);color:var(--red);}
+.al-type-badge.risk{background:rgba(240,79,90,.1);color:var(--red);}
+.al-type-badge.ref{background:rgba(245,166,35,.12);color:var(--orange);}
+.al-type-badge.opp{background:rgba(52,199,123,.12);color:var(--green);}
+.al-client-name{font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.al-detail{font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:2px;}
+.al-tramo-tag{font-size:10.5px;color:var(--text3);margin-top:4px;}
+.al-card-metrics{display:flex;gap:14px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.al-metric{text-align:right;}
+.al-metric-val{font-size:15px;font-weight:600;font-family:var(--mono);}
+.al-metric-val.neg{color:var(--red);}
+.al-metric-val.neg-mild{color:var(--orange);}
+.al-metric-val.pos{color:var(--green);}
+.al-metric-val.muted{color:var(--text2);}
+.al-metric-label{font-size:10px;color:var(--text3);margin-top:1px;}
+.al-pct{font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;font-family:var(--mono);white-space:nowrap;}
+.al-pct.severe{background:rgba(240,79,90,.15);color:var(--red);}
+.al-pct.moderate{background:rgba(245,166,35,.15);color:var(--orange);}
+.al-pct.positive{background:rgba(52,199,123,.15);color:var(--green);}
+.al-empty{text-align:center;padding:48px 20px;}
+.al-empty-icon{font-size:32px;margin-bottom:10px;}
+.al-empty-title{font-size:14px;font-weight:500;margin-bottom:4px;}
+.al-empty-sub{font-size:12px;color:var(--text3);}
+
+
+/* ── SEARCHABLE CLIENT DROPDOWN ── */
+.cl-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.cl-year-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
+
+/* Period group: badge + year + month-start → month-end */
+.period-group{display:flex;align-items:center;gap:6px;}
+.period-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;font-size:10px;font-weight:700;flex-shrink:0;}
+.period-a{background:rgba(79,124,255,.2);color:var(--accent);}
+.period-b{background:rgba(52,199,123,.2);color:var(--green);}
+.period-vs{font-size:11px;font-weight:600;color:var(--text3);padding:0 2px;}
+.period-arrow{font-size:11px;color:var(--text3);}
+.period-month{width:78px !important;}
+
+/* Period tramo banner */
+.period-tramo{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.tramo-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:500;}
+.tramo-pill-a{background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--accent);}
+.tramo-pill-b{background:rgba(52,199,123,.1);border:1px solid rgba(52,199,123,.2);color:var(--green);}
+.tramo-sep{font-size:12px;color:var(--text3);font-weight:600;}
+
+/* Comparison summary banner */
+.comp-banner{border-radius:var(--radius);padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.comp-banner.down{background:rgba(240,79,90,.07);border:1px solid rgba(240,79,90,.18);}
+.comp-banner.up{background:rgba(52,199,123,.07);border:1px solid rgba(52,199,123,.18);}
+.comp-banner.neutral{background:var(--bg2);border:1px solid var(--border);}
+.cb-main{display:flex;flex-direction:column;}
+.cb-delta{font-size:26px;font-weight:600;font-family:var(--mono);letter-spacing:-.5px;}
+.cb-delta.down{color:var(--red);}
+.cb-delta.up{color:var(--green);}
+.cb-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.cb-col{display:flex;flex-direction:column;gap:2px;}
+.cb-col-label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.cb-col-val{font-size:15px;font-weight:500;font-family:var(--mono);color:var(--text2);}
+
+/* Product table extras */
+.var-positive{color:var(--green);}
+.var-negative{color:var(--red);}
+
+/* ── PREPARACIÓN DE VISITA ── */
+.visita-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.visita-section{margin-bottom:20px;}
+.visita-section-header{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;cursor:pointer;user-select:none;}
+.visita-section-header:hover{background:var(--border);}
+.vsec-icon{font-size:16px;flex-shrink:0;}
+.vsec-title{font-size:13px;font-weight:500;color:var(--text);flex:1;}
+.vsec-count{font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--text3);}
+.vsec-toggle{color:var(--text3);font-size:14px;transition:transform .2s;}
+.vsec-toggle.open{transform:rotate(180deg);}
+.visita-section-body{background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;}
+.visita-table{width:100%;border-collapse:collapse;font-size:12px;}
+.visita-table th{font-size:10.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg2);white-space:nowrap;}
+.visita-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+.visita-table td:first-child{color:var(--text);}
+.visita-table tr:last-child td{border-bottom:none;}
+.visita-table tr:hover td{background:var(--bg3);}
+.vtd-r{text-align:right;font-family:var(--mono);font-size:11.5px;}
+.vtd-c{text-align:center;}
+.pri-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;flex-shrink:0;}
+.pri-red{background:var(--red);}
+.pri-orange{background:var(--orange);}
+.pri-green{background:var(--green);}
+.pri-blue{background:var(--accent);}
+.pri-badge{display:inline-flex;align-items:center;font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.pri-badge.red{background:rgba(240,79,90,.15);color:var(--red);}
+.pri-badge.orange{background:rgba(245,166,35,.15);color:var(--orange);}
+.pri-badge.green{background:rgba(52,199,123,.15);color:var(--green);}
+.pri-badge.blue{background:rgba(79,124,255,.15);color:var(--accent);}
+.visita-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px;}
+.vr-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+.vr-kpi-label{font-size:10.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.vr-kpi-val{font-size:20px;font-weight:600;font-family:var(--mono);color:var(--text);}
+.vr-kpi-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.plan-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);}
+.plan-item:last-child{border-bottom:none;}
+.plan-num{width:24px;height:24px;border-radius:50%;background:rgba(79,124,255,.15);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.plan-text{flex:1;}
+.plan-title{font-size:12.5px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.plan-desc{font-size:11.5px;color:var(--text2);line-height:1.5;}
+.plan-amount{font-size:11px;font-family:var(--mono);color:var(--accent);margin-top:3px;}
+.exec-box{background:rgba(79,124,255,.07);border:1px solid rgba(79,124,255,.2);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;}
+.exec-total{font-size:26px;font-weight:600;font-family:var(--mono);color:var(--accent);margin:6px 0 4px;}
+.exec-sub{font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px;}
+.exec-actions{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.exec-action{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);}
+.exec-action::before{content:'→';color:var(--accent);font-weight:600;}
+
+/* ── IMPORT MODE TABS ── */
+.import-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.imt-tab{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border2);cursor:pointer;transition:all .15s;background:var(--bg3);}
+.imt-tab:hover{border-color:var(--accent);background:rgba(79,124,255,.05);}
+.imt-tab.active{border-color:var(--accent);background:rgba(79,124,255,.08);}
+.imt-icon{font-size:18px;flex-shrink:0;}
+.imt-title{font-size:12.5px;font-weight:500;color:var(--text);line-height:1.3;}
+.imt-sub{font-size:10.5px;color:var(--text3);margin-top:2px;}
+.import-info-box{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;line-height:1.6;}
+
+/* ── NAVISION MODAL ── */
+.nav-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;}
+.nav-modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:720px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.55);}
+.nav-modal-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.nav-modal-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.3px;}
+.nav-modal-sub{font-size:11.5px;color:var(--text3);margin-top:3px;}
+.nav-modal-body{flex:1;overflow-y:auto;padding:18px 20px;}
+.nav-modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:var(--bg3);}
+.nav-step{margin-bottom:18px;}
+.nav-step-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.nav-preview-wrap{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0;overflow:hidden;}
+.nav-warning-row{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:var(--radius-sm);font-size:11.5px;margin-bottom:6px;}
+.nav-warning-row.warn{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);color:var(--orange);}
+.nav-warning-row.err{background:rgba(240,79,90,.08);border:1px solid rgba(240,79,90,.2);color:var(--red);}
+.nav-warning-row.ok{background:rgba(52,199,123,.08);border:1px solid rgba(52,199,123,.2);color:var(--green);}
+
+/* ── DUPLICATE PROTECTION MODAL ── */
+.dup-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;
+  display:flex;align-items:center;justify-content:center;padding:20px;}
+.dup-modal{background:var(--bg2);border:1px solid rgba(240,79,90,.35);
+  border-radius:14px;width:100%;max-width:420px;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.55);}
+.dup-modal-header{padding:20px 22px 16px;border-bottom:1px solid var(--border);}
+.dup-modal-icon{font-size:28px;margin-bottom:8px;}
+.dup-modal-title{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.3px;}
+.dup-modal-body{padding:18px 22px;}
+.dup-info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.dup-info-row:last-child{border-bottom:none;}
+.dup-info-label{color:var(--text2);}
+.dup-info-val{font-family:var(--mono);font-weight:500;color:var(--text);}
+.dup-msg{margin-top:14px;padding:10px 13px;background:rgba(240,79,90,.08);
+  border:1px solid rgba(240,79,90,.2);border-radius:var(--radius-sm);
+  font-size:11.5px;color:var(--text2);line-height:1.6;}
+.dup-modal-footer{padding:14px 22px;border-top:1px solid var(--border);
+  background:var(--bg3);display:flex;justify-content:flex-end;}
+
+/* ── PERIOD MANAGER ── */
+.pm-section{margin-top:22px;padding-top:16px;border-top:1px solid var(--border);}
+.pm-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.07em;margin-bottom:12px;}
+.pm-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.pm-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;}
+.pm-row{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;background:var(--bg3);border-radius:var(--radius-sm);
+  border:1px solid var(--border);font-size:12px;}
+.pm-row-info{display:flex;flex-direction:column;gap:2px;}
+.pm-row-label{color:var(--text);font-weight:500;text-transform:capitalize;}
+.pm-row-count{font-size:10.5px;color:var(--text3);font-family:var(--mono);}
+.pm-del-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);
+  background:rgba(240,79,90,.1);color:var(--red);border:1px solid rgba(240,79,90,.2);
+  cursor:pointer;transition:all .15s;white-space:nowrap;}
+.pm-del-btn:hover{background:rgba(240,79,90,.2);}
+.pm-empty{font-size:12px;color:var(--text3);padding:8px 0;}
+
+/* Debug panel */
+.nav-debug-tabs{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;}
+.nav-debug-tab{font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);cursor:pointer;background:var(--bg3);color:var(--text2);transition:all .12s;}
+.nav-debug-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.nav-debug-body{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);max-height:200px;overflow-y:auto;font-size:11px;font-family:var(--mono);}
+.nav-debug-row{display:grid;gap:0;padding:5px 10px;border-bottom:1px solid var(--border);}
+.nav-debug-row:last-child{border-bottom:none;}
+.nav-debug-row.cl{grid-template-columns:60px 1fr 1fr;color:var(--green);}
+.nav-debug-row.pr{grid-template-columns:50px 80px 1fr;color:var(--text2);}
+.nav-debug-row.ig{grid-template-columns:50px 90px 1fr;color:var(--text3);}
+.nav-debug-fila{color:var(--text3);}
+
+/* Wrapper — relative so dropdown positions correctly */
+.cs-wrap{position:relative;width:300px;flex-shrink:0;}
+
+/* Input row — the visible "select" replacement */
+.cs-input-row{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:0 10px;height:34px;cursor:text;transition:border-color .15s;}
+.cs-input-row:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,124,255,.12);}
+.cs-icon{color:var(--text3);font-size:15px;flex-shrink:0;pointer-events:none;margin-top:1px;}
+.cs-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-family:var(--font);min-width:0;caret-color:var(--accent);}
+.cs-input::placeholder{color:var(--text3);}
+.cs-clear{color:var(--text3);font-size:16px;cursor:pointer;padding:2px 3px;border-radius:3px;transition:color .1s;line-height:1;display:none;}
+.cs-clear:hover{color:var(--text);}
+.cs-chevron{color:var(--text3);font-size:16px;transform:rotate(90deg);transition:transform .2s;flex-shrink:0;line-height:1;}
+.cs-wrap.open .cs-chevron{transform:rotate(-90deg);}
+
+/* Dropdown panel */
+.cs-dropdown{position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.3);z-index:200;overflow:hidden;}
+.cs-list{max-height:336px;overflow-y:auto;padding:4px;}
+.cs-list::-webkit-scrollbar{width:4px;}
+.cs-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* Each client option in the dropdown */
+.cs-option{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:6px;cursor:pointer;transition:background .1s;gap:10px;}
+.cs-option:hover,.cs-option.focused{background:var(--bg3);}
+.cs-option.selected{background:rgba(79,124,255,.1);}
+.cs-option.selected .cs-opt-name{color:var(--accent);}
+.cs-opt-left{min-width:0;flex:1;}
+.cs-opt-name{font-size:12.5px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cs-opt-meta{font-size:10.5px;color:var(--text3);margin-top:2px;}
+.cs-opt-right{text-align:right;flex-shrink:0;}
+.cs-opt-revenue{font-size:12px;font-weight:500;font-family:var(--mono);color:var(--text2);}
+.cs-opt-year{font-size:10px;color:var(--text3);margin-top:2px;}
+.cs-no-results{padding:18px 12px;text-align:center;color:var(--text3);font-size:12px;}
+
+/* Highlight matched text */
+.cs-match{color:var(--accent);font-weight:600;}
+
+/* Selected client chip */
+.cs-chip-row{margin-bottom:14px;}
+.cs-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.25);border-radius:20px;padding:5px 10px 5px 14px;max-width:100%;}
+.cs-chip-name{font-size:12.5px;font-weight:500;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cs-chip-close{color:rgba(79,124,255,.6);font-size:16px;cursor:pointer;line-height:1;padding:0 2px;border-radius:50%;transition:color .1s;}
+.cs-chip-close:hover{color:var(--accent);}
+/* Animate dropdown */
+@keyframes dropDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.cs-dropdown{animation:dropDown .12s ease;}
+.empty{text-align:center;padding:52px 24px;color:var(--text3);}
+.empty-icon{font-size:38px;margin-bottom:12px;}
+.empty-title{font-size:14px;color:var(--text2);margin-bottom:6px;}
+.empty-sub{font-size:12px;}
+.panel{display:none;}
+.panel.active{display:block;}
+.section-sep{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);margin-right:4px;}
+.loader{display:inline-block;width:13px;height:13px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* Comparativa cliente */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.comp-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.comp-row:last-child{border-bottom:none;}
+.highlight-row{background:rgba(79,124,255,.06);border-radius:4px;padding:7px 8px;margin-bottom:2px;}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE SYSTEM — 3 layouts, single codebase
+   ─────────────────────────────────────────────────────────────────────────
+   DESKTOP  > 1200px   sidebar 210px + main, 4-col KPI, 2-col charts
+   TABLET   768–1200px sidebar 64px icon-only + main, 2-col KPI, 2-col charts
+   MOBILE   < 768px    no sidebar, bottom nav, 2-col KPI, 1-col charts
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS CUSTOM PROPERTIES — layout tokens ─────────────────────────────── */
+:root {
+  --sidebar-w:   210px;   /* desktop */
+  --topbar-h:    50px;
+  --bottom-nav-h:60px;
+  --content-px:  24px;
+  --content-py:  22px;
+  --col-gap:     14px;
+  --touch-min:   44px;
+}
+
+/* ── BOTTOM NAV — hidden on desktop, shown on mobile ──────────────────── */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  z-index: 150;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-inner {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  height: var(--bottom-nav-h);
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer; color: var(--text3); transition: color .15s;
+  font-size: 10px; font-weight: 500; padding: 4px 2px;
+  min-height: var(--touch-min);
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.bn-item:active  { background: rgba(79,124,255,.07); }
+.bn-item.active  { color: var(--accent); }
+.bn-item .bn-icon { font-size: 18px; line-height: 1; }
+.bn-badge {
+  position: absolute; top: 5px; right: calc(50% - 16px);
+  background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+  padding: 1px 4px; border-radius: 8px; min-width: 14px; text-align: center;
+  pointer-events: none;
+}
+
+/* ── SHARED TOUCH TARGETS — applies to tablet + mobile ────────────────── */
+@media (max-width: 1200px) {
+  .btn          { min-height: var(--touch-min); }
+  .filter-select{ min-height: var(--touch-min); }
+  .user-btn     { min-height: 52px; }
+  .cs-input-row { height: var(--touch-min); }
+  .filter-pill  { min-height: 36px; line-height: 1.3; display: inline-flex; align-items: center; }
+  .sev-pill     { min-height: 36px; display: inline-flex; align-items: center; }
+  .imt-tab      { min-height: 60px; }
+  input[type=range] { height: 28px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLET — 768px to 1200px
+   Layout: narrow sidebar (icon + label) + main area
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1200px) {
+  :root {
+    --sidebar-w:  180px;
+    --content-px: 18px;
+    --content-py: 16px;
+    --col-gap:    12px;
+  }
+
+  /* Sidebar: slightly narrower, same structure */
+  .sidebar         { width: var(--sidebar-w); }
+  .sidebar-logo    { font-size: 13px; padding: 0 14px 14px; }
+  .sidebar-bottom  { font-size: 10.5px; padding: 12px 14px 0; }
+  .nav-item        { padding: 9px 14px; font-size: 12px; min-height: var(--touch-min); }
+
+  /* Content */
+  .content { padding: var(--content-py) var(--content-px); }
+
+  /* KPI: 2×2 grid on tablet */
+  .kpi-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .kpi-val  { font-size: 20px; }
+
+  /* Charts: keep 2-col but allow stacking on narrow tablet */
+  .grid2 { grid-template-columns: repeat(2,1fr); gap: var(--col-gap); }
+  .grid3 { grid-template-columns: repeat(2,1fr); gap: var(--col-gap); }
+  .comp-grid { grid-template-columns: 1fr; gap: var(--col-gap); }
+
+  /* Alert metrics: allow wrap */
+  .alert-body    { grid-template-columns: 1fr; gap: 10px; }
+  .alert-metrics { justify-content: flex-start; flex-wrap: wrap; }
+
+  /* Period filters wrap on narrow tablet */
+  .cl-year-filters { gap: 8px; flex-wrap: wrap; }
+  .period-group    { flex-wrap: wrap; gap: 5px; }
+
+  /* Visita: hide extra columns */
+  .visita-table th:nth-child(n+6),
+  .visita-table td:nth-child(n+6) { display: none; }
+
+  /* Topbar tighter */
+  .topbar { padding: 10px var(--content-px); }
+
+  /* Chart canvases: slightly shorter */
+  .card [style*="195px"] { height: 175px !important; }
+  .card [style*="200px"] { height: 175px !important; }
+  .card [style*="170px"] { height: 150px !important; }
+
+  /* Radar filters wrap */
+  .radar-filters { flex-wrap: wrap; gap: 10px; }
+
+  /* Visita resumen 3-col */
+  .visita-resumen { grid-template-columns: repeat(3,1fr); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE — < 768px
+   Layout: no sidebar, bottom nav, full-width single column
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  :root {
+    --content-px: 12px;
+    --content-py: 12px;
+    --col-gap:    10px;
+  }
+
+  /* ── App shell ── */
+  html, body { overflow: hidden; }
+  .app { flex-direction: column; }
+  .sidebar { display: none !important; }
+  .bottom-nav { display: block; }
+
+  /* Main: full width, scroll, clear bottom nav */
+  .main { width: 100%; overflow-y: auto; overflow-x: hidden; }
+  .content {
+    padding: var(--content-py) var(--content-px);
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 8px);
+  }
+
+  /* ── Login ── */
+  .login-box {
+    width: calc(100vw - 28px);
+    padding: 24px 18px;
+    border-radius: 14px;
+  }
+  .new-user-form { flex-direction: column; }
+
+  /* ── Topbar ── */
+  .topbar           { padding: 10px var(--content-px); gap: 8px; }
+  .topbar-title     { font-size: 14px; }
+  #year-pills       { display: none !important; }
+  /* Hide desktop import button — accessible via bottom nav */
+  .topbar-right .btn-primary { display: none; }
+
+  /* ── KPIs: 2 per row ── */
+  .kpi-grid       { grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 12px; }
+  .kpi-val        { font-size: 17px; letter-spacing: -.3px; }
+  .kpi-sub        { font-size: 10px; }
+  .kpi-badge      { font-size: 9px; padding: 1px 5px; }
+  .card           { padding: 12px; }
+
+  /* ── All multi-col grids → single col ── */
+  .grid2     { grid-template-columns: 1fr; gap: var(--col-gap); }
+  .grid3     { grid-template-columns: 1fr; gap: var(--col-gap); }
+  .comp-grid { grid-template-columns: 1fr; gap: var(--col-gap); }
+
+  /* ── Chart heights ── */
+  .card [style*="195px"] { height: 150px !important; }
+  .card [style*="200px"] { height: 150px !important; }
+  .card [style*="170px"] { height: 130px !important; }
+  .card [style*="140px"] { height: 120px !important; }
+
+  /* ── Alerts: card style, stacked metrics ── */
+  .alert-row { margin-bottom: 8px; }
+  .alert-body {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+  .alert-metrics {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    justify-content: flex-start;
+  }
+  .alert-metric-val { font-size: 13px; }
+  .radar-header     { grid-template-columns: 1fr; gap: 8px; }
+  .radar-filters    {
+    flex-direction: column; align-items: stretch; gap: 10px; padding: 10px 12px;
+  }
+  .radar-sep          { display: none; }
+  .radar-filter-group { width: 100%; }
+  .radar-input        { width: 100% !important; font-size: 14px; }
+  #f-cliente          { max-width: none !important; width: 100%; }
+
+  /* ── Tables: horizontal scroll in wrapper ── */
+  .table-wrap {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm);
+  }
+  .table-wrap table { min-width: 460px; font-size: 11px; }
+  /* Visita: hide cols 5+ */
+  .visita-table th:nth-child(n+5),
+  .visita-table td:nth-child(n+5) { display: none; }
+
+  /* ── Client search ── */
+  .cs-wrap          { width: 100% !important; }
+  .cl-toolbar       { flex-direction: column; align-items: stretch; gap: 8px; }
+  .cl-year-filters  {
+    flex-direction: column; align-items: flex-start;
+    gap: 8px; padding: 10px 12px; border-radius: var(--radius);
+  }
+  .period-group { flex-wrap: wrap; gap: 6px; }
+  .period-vs    { display: none; }
+  .period-month { width: 72px !important; }
+
+  /* ── Period tramo + comparison banner ── */
+  .period-tramo { flex-wrap: wrap; gap: 6px; }
+  .comp-banner  { flex-direction: column; gap: 10px; }
+
+  /* ── Filter bars ── */
+  .filter-bar { gap: 6px; flex-wrap: wrap; }
+  .filter-bar .filter-select { max-width: none !important; flex: 1 1 140px; }
+
+  /* ── Import ── */
+  .import-mode-tabs  { grid-template-columns: 1fr; gap: 8px; }
+  .imt-tab           { padding: 10px 12px; }
+  .import-info-box   { font-size: 11px; }
+
+  /* ── Navision modal: bottom sheet ── */
+  .nav-modal-overlay { padding: 0; align-items: flex-end; }
+  .nav-modal {
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh; width: 100%;
+  }
+  .nav-debug-tabs { flex-wrap: wrap; gap: 4px; }
+
+  /* ── Visita ── */
+  .visita-toolbar       { flex-direction: column; align-items: stretch; gap: 8px; }
+  .visita-toolbar .cs-wrap { width: 100% !important; }
+  .visita-resumen       { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .vr-kpi-val           { font-size: 17px; }
+  .exec-box > div[style*="grid"] { grid-template-columns: repeat(2,1fr) !important; }
+  .plan-item            { padding: 10px 12px; }
+
+  /* ── Exec/summary ── */
+  .exec-box    { padding: 12px 14px; }
+  .exec-total  { font-size: 22px; }
+
+  /* ── Overflow guard ── */
+  .content > * { max-width: 100%; }
+  .chart-card,.card { overflow: hidden; }
+}
+
+/* ── DESKTOP (> 1200px) — base styles already handle this ─────────────── */
+/* No extra rules needed: all base styles target desktop-first */
+
+/* ── MÓDULO INFORMES ────────────────────────────────────────────────────── */
+.inf-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.inf-tab-btn{display:flex;align-items:center;gap:8px;padding:12px 16px;
+  border-radius:var(--radius);border:1px solid var(--border2);cursor:pointer;
+  background:var(--bg3);transition:all .15s;flex:1;min-width:180px;}
+.inf-tab-btn:hover{border-color:var(--accent);background:rgba(79,124,255,.05);}
+.inf-tab-btn.active{border-color:var(--accent);background:rgba(79,124,255,.09);}
+.inf-tab-icon{font-size:20px;flex-shrink:0;}
+.inf-tab-title{font-size:13px;font-weight:500;color:var(--text);}
+.inf-tab-sub{font-size:10.5px;color:var(--text3);margin-top:2px;}
+.inf-panel{display:none;}
+.inf-panel.active{display:block;}
+.inf-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:640px;}
+.inf-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:14px;}
+.inf-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
+.inf-field{display:flex;flex-direction:column;gap:4px;}
+.inf-field label{font-size:11px;color:var(--text3);}
+.inf-field select,.inf-field input{background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);padding:7px 10px;border-radius:var(--radius-sm);font-size:12px;
+  font-family:var(--font);outline:none;min-height:38px;}
+.inf-field select:focus,.inf-field input:focus{border-color:var(--accent);}
+.inf-sep{font-size:12px;color:var(--text3);padding-bottom:8px;align-self:flex-end;}
+.inf-preview{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px 16px;margin:14px 0;font-size:12px;color:var(--text2);line-height:1.8;}
+.inf-preview strong{color:var(--text);font-weight:500;}
+.inf-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.inf-status{margin-top:10px;font-size:12px;min-height:18px;}
+
+/* PDF print styles — applied when window.print() is called */
+@media print{
+  body > *{display:none !important;}
+  #pdf-print-area{display:block !important;}
+  #pdf-print-area{
+    font-family:'DM Sans',sans-serif;font-size:11pt;color:#111;
+    background:#fff;padding:0;margin:0;
+  }
+  .pdf-page{padding:20mm 18mm;min-height:100vh;}
+  .pdf-header{border-bottom:2px solid #1a3a6b;padding-bottom:10mm;margin-bottom:8mm;}
+  .pdf-logo{font-size:18pt;font-weight:700;color:#1a3a6b;letter-spacing:-.5px;}
+  .pdf-logo span{color:#4f7cff;}
+  .pdf-client{font-size:16pt;font-weight:600;color:#111;margin:4mm 0 1mm;}
+  .pdf-period{font-size:10pt;color:#555;}
+  .pdf-date{font-size:9pt;color:#888;margin-top:2mm;}
+  .pdf-section{margin-top:7mm;}
+  .pdf-section-title{font-size:11pt;font-weight:700;color:#1a3a6b;border-bottom:1px solid #c0cce8;
+    padding-bottom:2mm;margin-bottom:4mm;text-transform:uppercase;letter-spacing:.05em;}
+  .pdf-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm;margin-bottom:4mm;}
+  .pdf-kpi{background:#f4f7fc;border-radius:3mm;padding:4mm 5mm;}
+  .pdf-kpi-label{font-size:8pt;color:#666;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm;}
+  .pdf-kpi-val{font-size:16pt;font-weight:700;color:#1a3a6b;}
+  .pdf-table{width:100%;border-collapse:collapse;font-size:9pt;margin-top:2mm;}
+  .pdf-table th{background:#1a3a6b;color:#fff;padding:2mm 3mm;text-align:left;font-weight:600;}
+  .pdf-table td{padding:2mm 3mm;border-bottom:1px solid #e5e9f2;}
+  .pdf-table tr:nth-child(even) td{background:#f8faff;}
+  .pdf-table .num{text-align:right;font-family:monospace;}
+  .pdf-table .pos{color:#1a7a4a;font-weight:600;}
+  .pdf-table .neg{color:#c0392b;font-weight:600;}
+  .pdf-footer{margin-top:auto;padding-top:5mm;border-top:1px solid #e0e6f0;
+    font-size:8pt;color:#999;text-align:center;}
+}
+#pdf-print-area{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen" class="screen">
+  <div class="login-box">
+    <div class="login-logo">ventas<span>.</span>app</div>
+    <div class="login-section">Selecciona tu usuario</div>
+    <div class="user-list" id="user-list"></div>
+    <div class="divider"></div>
+    <div class="login-section">Nuevo usuario</div>
+    <div class="new-user-form">
+      <input class="input" id="new-user-input" placeholder="Nombre del usuario" maxlength="30" onkeydown="if(event.key==='Enter')createUser()">
+      <button class="btn btn-primary" onclick="createUser()">Crear</button>
+    </div>
+    <div id="login-error" style="font-size:11px;color:var(--red);margin-top:8px;min-height:16px"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app" id="app" style="display:none">
+  <div class="sidebar">
+    <div class="sidebar-logo">ventas<span>.</span>app</div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="su-avatar"></div>
+      <div class="su-name" id="su-name"></div>
+      <div class="su-logout" title="Cerrar sesión" onclick="logout()">⇤</div>
+    </div>
+    <div class="nav-item active" onclick="goTo('dashboard',this)"><span class="nav-icon">▦</span> Dashboard</div>
+    <div class="nav-item" onclick="goTo('clientes',this)"><span class="nav-icon">◎</span> Clientes</div>
+    <div class="nav-item" onclick="goTo('alertas',this)"><span class="nav-icon">◈</span> Alertas <span id="alert-badge" class="alert-badge" style="display:none"></span></div>
+    <div class="nav-item" onclick="goTo('datos',this)"><span class="nav-icon">⊞</span> Datos</div>
+    <div class="nav-item" onclick="goTo('visita',this)"><span class="nav-icon">⊕</span> Prep. Visita</div>
+    <div class="nav-item" onclick="goTo('informes',this)"><span class="nav-icon">📄</span> Informes</div>
+    <div class="nav-item" onclick="goTo('importar',this)"><span class="nav-icon">↑</span> Importar Excel</div>
+    <div class="sidebar-bottom" id="db-status">Sin datos</div>
+  </div>
+
+  <!-- ── MOBILE BOTTOM NAV ── -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Navegación principal móvil">
+    <div class="bottom-nav-inner">
+      <div class="bn-item active" id="bn-dashboard" onclick="goTo('dashboard',this);syncBottomNav('dashboard')" style="position:relative">
+        <span class="bn-icon">▦</span><span>Inicio</span>
+      </div>
+      <div class="bn-item" id="bn-clientes" onclick="goTo('clientes',this);syncBottomNav('clientes')" style="position:relative">
+        <span class="bn-icon">◎</span><span>Clientes</span>
+      </div>
+      <div class="bn-item" id="bn-alertas" onclick="goTo('alertas',this);syncBottomNav('alertas')" style="position:relative">
+        <span class="bn-icon">◈</span><span>Alertas</span>
+        <span id="bn-alert-badge" class="bn-badge" style="display:none"></span>
+      </div>
+      <div class="bn-item" id="bn-visita" onclick="goTo('visita',this);syncBottomNav('visita')" style="position:relative">
+        <span class="bn-icon">⊕</span><span>Visita</span>
+      </div>
+      <div class="bn-item" id="bn-importar" onclick="goTo('importar',this);syncBottomNav('importar')" style="position:relative">
+        <span class="bn-icon">↑</span><span>Importar</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <div id="year-pills" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></div>
+        <button class="btn btn-primary" onclick="goTo('importar',document.querySelectorAll('.nav-item')[4])">↑ Importar mes</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="panel-dashboard" class="panel active">
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="grid2">
+          <div class="card"><div class="card-title">Evolución mensual (€)</div><div style="height:195px"><canvas id="c-lineas"></canvas></div></div>
+          <div class="card"><div class="card-title">Top clientes</div><div style="height:195px"><canvas id="c-clientes"></canvas></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><div class="card-title">Top productos</div><div style="height:195px"><canvas id="c-productos"></canvas></div></div>
+          <div class="card"><div class="card-title">Ventas por año</div><div style="height:195px"><canvas id="c-anual"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div id="panel-clientes" class="panel">
+        <div class="cl-toolbar">
+
+          <!-- Searchable client dropdown -->
+          <div class="cs-wrap" id="cs-wrap">
+            <div class="cs-input-row" onclick="openClientDropdown()">
+              <span class="cs-icon">⌕</span>
+              <input
+                class="cs-input"
+                id="cs-input"
+                type="text"
+                placeholder="Buscar cliente…"
+                autocomplete="off"
+                spellcheck="false"
+                oninput="filterClients()"
+                onkeydown="csKeyNav(event)"
+                onfocus="openClientDropdown()"
+              >
+              <span class="cs-clear" id="cs-clear" onclick="clearClientSearch(event)" title="Limpiar">×</span>
+              <span class="cs-chevron" id="cs-chevron">›</span>
+            </div>
+            <div class="cs-dropdown" id="cs-dropdown" style="display:none">
+              <div class="cs-list" id="cs-list"></div>
+            </div>
+          </div>
+
+          <!-- Period filters — shown once a client is selected -->
+          <div class="cl-year-filters" id="cl-year-filters" style="display:none">
+
+            <!-- Year A + period -->
+            <div class="period-group">
+              <span class="period-badge period-a">A</span>
+              <select class="filter-select" id="sel-cl-año" onchange="renderCliente()" title="Año principal"></select>
+              <select class="filter-select period-month" id="sel-cl-m0" onchange="renderCliente()" title="Mes inicio"></select>
+              <span class="period-arrow">→</span>
+              <select class="filter-select period-month" id="sel-cl-m1" onchange="renderCliente()" title="Mes fin"></select>
+            </div>
+
+            <span class="period-vs">vs</span>
+
+            <!-- Year B + period (mirrors A by default, editable) -->
+            <div class="period-group">
+              <span class="period-badge period-b">B</span>
+              <select class="filter-select" id="sel-cl-comp" onchange="syncPeriodB()" title="Año comparativo"></select>
+              <select class="filter-select period-month" id="sel-cl-m2" onchange="renderCliente()" title="Mes inicio comparativo"></select>
+              <span class="period-arrow">→</span>
+              <select class="filter-select period-month" id="sel-cl-m3" onchange="renderCliente()" title="Mes fin comparativo"></select>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Selected client chip (shown when a client is active) -->
+        <div class="cs-chip-row" id="cs-chip-row" style="display:none">
+          <div class="cs-chip" id="cs-chip">
+            <span class="cs-chip-name" id="cs-chip-name"></span>
+            <span class="cs-chip-close" onclick="clearClientSearch(event)" title="Cambiar cliente">×</span>
+          </div>
+        </div>
+
+        <div id="cliente-view">
+          <div class="empty"><div class="empty-icon">◎</div><div class="empty-title">Busca y selecciona un cliente</div><div class="empty-sub">Escribe en el buscador o pulsa para ver todos</div></div>
+        </div>
+      </div>
+
+      <!-- ALERTAS v3 — tarjetas por tipo -->
+      <div id="panel-alertas" class="panel">
+
+        <!-- Filters bar -->
+        <div class="al-filters" id="al-filters" style="display:none">
+          <!-- Type pills -->
+          <div class="al-filter-group" style="gap:5px;flex-wrap:wrap">
+            <span class="al-pill active"      id="alp-all"  onclick="setAlType('all',this)">Todas</span>
+            <span class="al-pill t-gone"      id="alp-gone" onclick="setAlType('gone',this)">✕ Desaparecidos</span>
+            <span class="al-pill t-risk"      id="alp-risk" onclick="setAlType('risk',this)">↓ En riesgo</span>
+            <span class="al-pill t-ref"       id="alp-ref"  onclick="setAlType('ref',this)">◎ Referencia</span>
+            <span class="al-pill t-opp"       id="alp-opp"  onclick="setAlType('opp',this)">↑ Oportunidad</span>
+          </div>
+          <div class="al-sep"></div>
+          <!-- Min € -->
+          <div class="al-filter-group">
+            <span class="al-filter-label">Mín. €</span>
+            <input class="al-input" id="al-min-euros" type="number" value="100" min="0" step="50" onchange="renderAlertas()">
+          </div>
+          <!-- Min % -->
+          <div class="al-filter-group">
+            <span class="al-filter-label">Mín. %</span>
+            <input class="al-input" id="al-min-pct" type="number" value="15" min="0" step="5" onchange="renderAlertas()">
+          </div>
+          <!-- Min uds -->
+          <div class="al-filter-group">
+            <span class="al-filter-label">Mín. uds</span>
+            <input class="al-input" id="al-min-uds" type="number" value="6" min="0" step="1" onchange="renderAlertas()">
+          </div>
+          <!-- Min opp € -->
+          <div class="al-filter-group">
+            <span class="al-filter-label">Oport. €</span>
+            <input class="al-input" id="al-min-opp" type="number" value="100" min="0" step="50" onchange="renderAlertas()">
+          </div>
+          <div class="al-sep"></div>
+          <!-- Client filter -->
+          <div class="al-filter-group">
+            <span class="al-filter-label">Cliente</span>
+            <select class="filter-select" id="al-cliente" onchange="renderAlertas()" style="max-width:200px"></select>
+          </div>
+        </div>
+
+        <div id="alertas-view">
+          <div class="al-empty"><div class="al-empty-icon">◈</div>
+            <div class="al-empty-title">Importa datos para ver alertas</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DATOS -->
+      <div id="panel-datos" class="panel">
+        <div class="filter-bar">
+          <span class="filter-label">Filtrar:</span>
+          <select class="filter-select" id="datos-año" onchange="renderTabla()"></select>
+          <select class="filter-select" id="datos-mes" onchange="renderTabla()"></select>
+          <select class="filter-select" id="datos-cliente" onchange="renderTabla()" style="max-width:200px"></select>
+          <button class="btn btn-ghost" onclick="exportCSV()">↓ CSV</button>
+        </div>
+        <div class="card"><div class="table-wrap">
+          <table><thead><tr><th>Año</th><th>Mes</th><th>Cliente</th><th>Producto</th><th>Uds</th><th style="text-align:right">Importe</th></tr></thead>
+          <tbody id="tabla-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- PREPARACIÓN DE VISITA -->
+      <div id="panel-visita" class="panel">
+        <div class="visita-toolbar" id="visita-toolbar">
+          <div class="cs-wrap" id="vcs-wrap" style="width:300px">
+            <div class="cs-input-row" onclick="openVisitaDropdown()">
+              <span class="cs-icon">⌕</span>
+              <input class="cs-input" id="vcs-input" type="text" placeholder="Buscar cliente para preparar visita…"
+                autocomplete="off" spellcheck="false"
+                oninput="filterVisitaClients()" onkeydown="vcsKeyNav(event)" onfocus="openVisitaDropdown()">
+              <span class="cs-clear" id="vcs-clear" onclick="clearVisitaClient(event)">×</span>
+              <span class="cs-chevron" id="vcs-chevron">›</span>
+            </div>
+            <div class="cs-dropdown" id="vcs-dropdown" style="display:none">
+              <div class="cs-list" id="vcs-list"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-gen-visita" onclick="renderVisita()" style="display:none">⊕ Generar informe</button>
+        </div>
+        <div id="visita-view">
+          <div class="empty"><div class="empty-icon">⊕</div><div class="empty-title">Preparación de visita comercial</div><div class="empty-sub">Selecciona un cliente para generar el informe</div></div>
+        </div>
+      </div>
+
+      <!-- INFORMES -->
+      <div id="panel-informes" class="panel">
+
+        <!-- Tab selector -->
+        <div class="inf-tabs">
+          <div class="inf-tab-btn active" id="inf-btn-pdf" onclick="switchInfTab('pdf',this)">
+            <span class="inf-tab-icon">📑</span>
+            <div><div class="inf-tab-title">Informe Cliente PDF</div><div class="inf-tab-sub">Ficha completa para visitas e impresión</div></div>
+          </div>
+          <div class="inf-tab-btn" id="inf-btn-excel" onclick="switchInfTab('excel',this)">
+            <span class="inf-tab-icon">📊</span>
+            <div><div class="inf-tab-title">Dashboard Excel</div><div class="inf-tab-sub">Exportar resumen, clientes y alertas</div></div>
+          </div>
+        </div>
+
+        <!-- PDF panel -->
+        <div class="inf-panel active" id="inf-panel-pdf">
+          <div class="inf-card">
+            <div class="inf-title">Configurar informe de cliente</div>
+            <div class="inf-row">
+              <div class="inf-field" style="flex:2;min-width:200px">
+                <label>Cliente</label>
+                <select id="inf-pdf-cliente"></select>
+              </div>
+            </div>
+            <div class="inf-row">
+              <div class="inf-field">
+                <label>Mes inicio</label>
+                <select id="inf-pdf-m0"></select>
+              </div>
+              <div class="inf-field">
+                <label>Año inicio</label>
+                <select id="inf-pdf-y0"></select>
+              </div>
+              <div class="inf-sep">→</div>
+              <div class="inf-field">
+                <label>Mes fin</label>
+                <select id="inf-pdf-m1"></select>
+              </div>
+              <div class="inf-field">
+                <label>Año fin</label>
+                <select id="inf-pdf-y1"></select>
+              </div>
+            </div>
+            <div class="inf-preview" id="inf-pdf-preview">Selecciona un cliente y periodo para ver el resumen.</div>
+            <div class="inf-actions">
+              <button class="btn btn-primary" onclick="generateClientPDF()">📑 Generar PDF</button>
+              <button class="btn btn-ghost" onclick="previewClientReport()">👁 Vista previa</button>
+            </div>
+            <div class="inf-status" id="inf-pdf-status"></div>
+          </div>
+        </div>
+
+        <!-- Excel panel -->
+        <div class="inf-panel" id="inf-panel-excel">
+          <div class="inf-card">
+            <div class="inf-title">Configurar exportación Excel</div>
+            <div class="inf-row">
+              <div class="inf-field">
+                <label>Mes inicio</label>
+                <select id="inf-xl-m0"></select>
+              </div>
+              <div class="inf-field">
+                <label>Año inicio</label>
+                <select id="inf-xl-y0"></select>
+              </div>
+              <div class="inf-sep">→</div>
+              <div class="inf-field">
+                <label>Mes fin</label>
+                <select id="inf-xl-m1"></select>
+              </div>
+              <div class="inf-field">
+                <label>Año fin</label>
+                <select id="inf-xl-y1"></select>
+              </div>
+            </div>
+            <div class="inf-row">
+              <div class="inf-field" style="flex:2;min-width:200px">
+                <label>Filtrar cliente (opcional)</label>
+                <select id="inf-xl-cliente"></select>
+              </div>
+            </div>
+            <div class="inf-preview" id="inf-xl-preview">Configura el periodo para ver el resumen.</div>
+            <div class="inf-actions">
+              <button class="btn btn-primary" onclick="generateDashboardExcel()">📊 Exportar Excel</button>
+            </div>
+            <div class="inf-status" id="inf-xl-status"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- IMPORTAR -->
+      <div id="panel-importar" class="panel">
+        <div class="card" style="max-width:560px;margin:0 auto;">
+          <div class="card-title">Importar Excel mensual</div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.65;">
+            <!-- Selector de modo -->
+          <div class="import-mode-tabs" id="import-mode-tabs">
+            <div class="imt-tab active" id="imt-std" onclick="setImportMode('std')">
+              <span class="imt-icon">⊞</span>
+              <div>
+                <div class="imt-title">Formato estándar</div>
+                <div class="imt-sub">Excel con columnas mes, año, cliente…</div>
+              </div>
+            </div>
+            <div class="imt-tab" id="imt-nav" onclick="setImportMode('nav')">
+              <span class="imt-icon">⚙</span>
+              <div>
+                <div class="imt-title">Navision / ERP</div>
+                <div class="imt-sub">Exportación directa sin limpiar</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info modo activo -->
+          <div id="import-info-std" class="import-info-box">
+            Columnas requeridas:
+            <span class="tag">mes</span><span class="tag">año</span><span class="tag">cliente</span><span class="tag">producto</span><span class="tag">unidades</span><span class="tag">importe</span>
+            <span style="font-size:11px;color:var(--text3);display:block;margin-top:6px">Los datos se guardan en el historial de <strong style="color:var(--text2)" id="import-user-label"></strong>. Si el mes ya existe, se sustituye.</span>
+          </div>
+          <div id="import-info-nav" class="import-info-box" style="display:none">
+            <strong style="color:var(--text)">Estructura Navision detectada automáticamente:</strong>
+            <div style="margin-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;font-size:11px;color:var(--text3)">
+              <span>Col A → Producto</span><span>Col B → Cód. cliente</span>
+              <span>Col C+D → Nombre cliente</span><span>Col E → Unidades</span>
+              <span>Col G → Importe €</span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--text3)">La app limpiará automáticamente celdas combinadas, filas vacías, subtotales y propagará el cliente hacia abajo. Deberás indicar el mes y año antes de importar.</div>
+          </div>
+
+          <!-- Zona de carga -->
+          <div class="upload-zone" onclick="document.getElementById('file-input').click()" id="drop-zone">
+            <div class="upload-icon">📂</div>
+            <div class="upload-title" id="upload-title">Haz clic o arrastra tu Excel aquí</div>
+            <div class="upload-sub" style="margin-top:4px">.xlsx · .xls · .csv</div>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this)">
+          <div id="import-status" style="margin-top:14px;font-size:12px;min-height:20px"></div>
+          <div class="section-sep" style="margin-top:22px">Historial de importaciones</div>
+          <div id="import-history" style="font-size:12px;color:var(--text3)">Sin importaciones.</div>
+
+          <!-- Period manager -->
+          <div class="pm-section">
+            <div class="pm-title">Eliminar periodo</div>
+            <div class="pm-list" id="pm-list">
+              <div class="pm-empty">Sin datos importados aún.</div>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center">
+            <button class="btn btn-danger" onclick="clearUserData()">🗑 Borrar mis datos</button>
+            <span style="font-size:11px;color:var(--text3)">Solo borra los datos de tu usuario</span>
+          </div>
+
+          <!-- DUPLICATE PROTECTION MODAL -->
+          <div id="dup-modal-overlay" class="dup-modal-overlay" style="display:none">
+            <div class="dup-modal">
+              <div class="dup-modal-header">
+                <div class="dup-modal-icon">⛔</div>
+                <div class="dup-modal-title">Periodo ya importado</div>
+              </div>
+              <div class="dup-modal-body">
+                <div class="dup-info-row">
+                  <span class="dup-info-label">Periodo detectado</span>
+                  <span class="dup-info-val" id="dup-periodo">—</span>
+                </div>
+                <div class="dup-info-row">
+                  <span class="dup-info-label">Registros existentes</span>
+                  <span class="dup-info-val" id="dup-count">—</span>
+                </div>
+                <div class="dup-msg">
+                  La importación se ha cancelado para evitar datos duplicados.<br>
+                  Si necesitas actualizar este periodo, elimínalo primero desde <strong style="color:var(--text)">Eliminar periodo</strong> y vuelve a importar.
+                </div>
+              </div>
+              <div class="dup-modal-footer">
+                <button class="btn btn-primary" onclick="closeDupModal()">Entendido</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL Navision: pedir mes/año + previsualización -->
+          <div id="nav-modal-overlay" class="nav-modal-overlay" style="display:none" onclick="closeNavModal()">
+            <div class="nav-modal" onclick="event.stopPropagation()">
+              <div class="nav-modal-header">
+                <div>
+                  <div class="nav-modal-title">⚙ Importación Navision</div>
+                  <div class="nav-modal-sub" id="nav-modal-fname"></div>
+                </div>
+                <button class="btn btn-ghost" style="padding:5px 10px" onclick="closeNavModal()">✕</button>
+              </div>
+
+              <div class="nav-modal-body">
+                <!-- Paso 1: mes y año -->
+                <div class="nav-step">
+                  <div class="nav-step-label">1 · Indica el periodo del fichero</div>
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Mes</div>
+                      <select class="filter-select" id="nav-mes" style="width:130px">
+                        <option value="">— mes —</option>
+                      </select>
+                    </div>
+                    <div>
+                      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Año</div>
+                      <select class="filter-select" id="nav-año" style="width:90px">
+                        <option value="">— año —</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Paso 2: previsualización -->
+                <div class="nav-step">
+                  <div class="nav-step-label">2 · Previsualización de datos limpios</div>
+                  <div class="nav-preview-wrap">
+                    <div id="nav-preview-info" style="font-size:11.5px;color:var(--text2);margin-bottom:10px"></div>
+                    <div class="table-wrap" style="max-height:280px">
+                      <table class="visita-table" id="nav-preview-table">
+                        <thead><tr><th>Cliente</th><th>Producto</th><th class="vtd-r">Uds</th><th class="vtd-r">Importe</th></tr></thead>
+                        <tbody id="nav-preview-body"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Errores / warnings -->
+                <div id="nav-warnings" style="display:none;margin-top:10px"></div>
+
+                <!-- Debug panel (oculto por defecto) -->
+                <div id="nav-debug-panel" style="display:none;margin-top:14px">
+                  <div class="nav-step-label" style="margin-bottom:8px">🔍 Debug — clasificación de filas</div>
+                  <div class="nav-debug-tabs">
+                    <span class="nav-debug-tab active" onclick="showDebugTab('clientes',this)">Clientes detectados</span>
+                    <span class="nav-debug-tab" onclick="showDebugTab('productos',this)">Productos detectados</span>
+                    <span class="nav-debug-tab" onclick="showDebugTab('ignoradas',this)">Filas ignoradas</span>
+                  </div>
+                  <div id="nav-debug-body" class="nav-debug-body"></div>
+                </div>
+              </div>
+
+              <div class="nav-modal-footer">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div id="nav-modal-status" style="font-size:12px;color:var(--text2)"></div>
+                  <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="toggleNavDebug()">🔍 Debug</button>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-ghost" onclick="closeNavModal()">Cancelar</button>
+                  <button class="btn btn-primary" id="btn-nav-import" onclick="confirmNavImport()">↑ Importar datos limpios</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
+const MESES_ORD=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MESES_C=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const PAL=['#4f7cff','#34c77b','#f5a623','#f04f5a','#a78bfa','#38bdf8','#fb923c','#4ade80','#f472b6','#facc15','#e879f9','#2dd4bf'];
+const AVATAR_COLORS=['#4f7cff','#34c77b','#f5a623','#f04f5a','#a78bfa','#38bdf8','#e879f9','#facc15'];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let currentUser = null; // {id, name, color}
+let DB = [];
+let importHistory = [];
+let currentYear = 'todos';
+let charts = {};
+
+// ── USER STORAGE ───────────────────────────────────────────────────────────
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('vapp_users')||'[]'); } catch(e){ return []; }
+}
+function saveUsers(users) {
+  localStorage.setItem('vapp_users', JSON.stringify(users));
+}
+function getUserDB(userId) {
+  try { return JSON.parse(localStorage.getItem(`vapp_db_${userId}`)||'[]'); } catch(e){ return []; }
+}
+function saveUserDB(userId, db) {
+  localStorage.setItem(`vapp_db_${userId}`, JSON.stringify(db));
+}
+function getUserHistory(userId) {
+  try { return JSON.parse(localStorage.getItem(`vapp_hist_${userId}`)||'[]'); } catch(e){ return []; }
+}
+function saveUserHistory(userId, hist) {
+  localStorage.setItem(`vapp_hist_${userId}`, JSON.stringify(hist));
+}
+function deleteUserData(userId) {
+  localStorage.removeItem(`vapp_db_${userId}`);
+  localStorage.removeItem(`vapp_hist_${userId}`);
+}
+
+// ── USER MANAGEMENT ────────────────────────────────────────────────────────
+function renderLoginScreen() {
+  const users = getUsers();
+  const list = document.getElementById('user-list');
+  if (!users.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:16px 0">Aún no hay usuarios. Crea el primero.</div>';
+    return;
+  }
+  list.innerHTML = users.map(u => {
+    const db = getUserDB(u.id);
+    const años = [...new Set(db.map(r=>r.año))].sort();
+    const meta = db.length ? `${db.length.toLocaleString('es-ES')} registros · ${años.join(', ')}` : 'Sin datos';
+    return `<div class="user-btn" onclick="loginUser('${u.id}')">
+      <div class="user-avatar" style="background:${u.color}22;color:${u.color}">${u.name.slice(0,2).toUpperCase()}</div>
+      <div class="user-info"><div class="user-name">${u.name}</div><div class="user-meta">${meta}</div></div>
+      <div class="user-del" onclick="event.stopPropagation();deleteUser('${u.id}')" title="Eliminar usuario">×</div>
+    </div>`;
+  }).join('');
+}
+
+function createUser() {
+  const input = document.getElementById('new-user-input');
+  const name = input.value.trim();
+  const err = document.getElementById('login-error');
+  if (!name) { err.textContent = 'Escribe un nombre'; return; }
+  const users = getUsers();
+  if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) { err.textContent = 'Ya existe ese nombre'; return; }
+  const id = 'u_' + Date.now();
+  const color = AVATAR_COLORS[users.length % AVATAR_COLORS.length];
+  users.push({id, name, color});
+  saveUsers(users);
+  input.value = ''; err.textContent = '';
+  renderLoginScreen();
+}
+
+function deleteUser(id) {
+  if (!confirm('¿Eliminar usuario y todos sus datos?')) return;
+  const users = getUsers().filter(u => u.id !== id);
+  saveUsers(users);
+  deleteUserData(id);
+  renderLoginScreen();
+}
+
+function loginUser(id) {
+  const users = getUsers();
+  currentUser = users.find(u => u.id === id);
+  if (!currentUser) return;
+  DB = getUserDB(id);
+  importHistory = getUserHistory(id);
+  currentYear = 'todos';
+  // Update UI
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').style.display = 'flex';
+  // Show bottom nav on mobile (CSS handles display:none on desktop)
+  document.getElementById('bottom-nav').style.display = '';
+  syncBottomNav('dashboard');
+  document.getElementById('su-name').textContent = currentUser.name;
+  document.getElementById('su-avatar').textContent = currentUser.name.slice(0,2).toUpperCase();
+  document.getElementById('su-avatar').style.cssText = `background:${currentUser.color}22;color:${currentUser.color};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;`;
+  document.getElementById('import-user-label').textContent = currentUser.name;
+  updateStatus(); buildYearPills();
+  if (DB.length) renderDashboard();
+  else {
+    document.getElementById('kpi-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">▦</div><div class="empty-title">Importa tu primer Excel para empezar</div><div class="empty-sub">Ve a Importar Excel en el menú lateral</div></div>`;
+  }
+  renderAlertas();
+}
+
+function logout() {
+  currentUser = null; DB = []; importHistory = []; currentYear = 'todos';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('login-screen').classList.remove('hidden');
+  // Reset panels
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  document.getElementById('page-title').textContent='Dashboard';
+  renderLoginScreen();
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────────
+function goTo(id, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  // Only add active class to sidebar nav-items (not bottom-nav bn-items)
+  if(el && el.classList.contains('nav-item')) el.classList.add('active');
+  const titles={dashboard:'Dashboard',clientes:'Ficha de Cliente',alertas:'Alertas Comerciales',datos:'Registros',importar:'Importar Excel',visita:'Preparación de Visita Comercial',informes:'Informes'};
+  document.getElementById('page-title').textContent=titles[id]||id;
+  if(id==='dashboard') renderDashboard();
+  if(id==='clientes') renderSelectores();
+  if(id==='alertas') renderAlertas();
+  if(id==='datos') renderTabla();
+  if(id==='importar') renderHistory();
+  if(id==='visita') initVisitaPanel();
+  if(id==='informes') initInformesPanel();
+  syncBottomNav(id);
+}
+
+/** Keeps bottom nav active state in sync with the current panel */
+function syncBottomNav(id) {
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('bn-' + id);
+  if (el) el.classList.add('active');
+  // Dashboard maps to 'bn-dashboard' which has id bn-dashboard
+}
+
+/** Mirrors alert badge count to the bottom nav badge */
+function syncAlertBadge() {
+  const src  = document.getElementById('alert-badge');
+  const dest = document.getElementById('bn-alert-badge');
+  if (!src || !dest) return;
+  dest.textContent   = src.textContent;
+  dest.style.display = src.style.display;
+}
+
+// ── YEAR PILLS ─────────────────────────────────────────────────────────────
+function getYears(){ return [...new Set(DB.map(r=>r.año))].sort(); }
+function buildYearPills(){
+  const años=getYears();
+  const cont=document.getElementById('year-pills');
+  cont.innerHTML=`<span class="filter-label" style="font-size:11px;color:var(--text3)">Año:</span>
+    <span class="filter-pill ${currentYear==='todos'?'active':''}" onclick="setYear('todos',this)">Todos</span>
+    ${años.map(a=>`<span class="filter-pill ${currentYear===a?'active':''}" onclick="setYear(${a},this)">${a}</span>`).join('')}`;
+}
+function setYear(y,el){
+  currentYear=y;
+  document.querySelectorAll('#year-pills .filter-pill').forEach(p=>p.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderDashboard();
+}
+
+function filtered(){ return currentYear==='todos'?DB:DB.filter(r=>r.año===currentYear); }
+
+// ── IMPORT ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SISTEMA DE IMPORTACIÓN DUAL — Estándar + Navision/ERP
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Modo activo: 'std' = estándar, 'nav' = Navision */
+let importMode = 'std';
+
+/** Datos limpios pendientes de confirmar (modo Navision) */
+let navPendingRows = [];
+let navPendingFile = '';
+
+/** Cambia el modo de importación y actualiza la UI */
+function setImportMode(mode) {
+  importMode = mode;
+  document.getElementById('imt-std').classList.toggle('active', mode === 'std');
+  document.getElementById('imt-nav').classList.toggle('active', mode === 'nav');
+  document.getElementById('import-info-std').style.display = mode === 'std' ? 'block' : 'none';
+  document.getElementById('import-info-nav').style.display = mode === 'nav' ? 'block' : 'none';
+  document.getElementById('upload-title').textContent =
+    mode === 'nav' ? 'Arrastra el Excel de Navision aquí' : 'Haz clic o arrastra tu Excel aquí';
+  document.getElementById('import-status').innerHTML = '';
+}
+
+/** Punto de entrada unificado — decide qué parser usar */
+function handleFile(input) {
+  if (!currentUser) return;
+  const file = input.files[0]; if (!file) return;
+  const st = document.getElementById('import-status');
+  st.innerHTML = '<span class="loader"></span> Leyendo fichero…';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellText: false, cellDates: true, raw: true });
+      if (importMode === 'nav') {
+        handleNavisionFile(wb, file.name);
+      } else {
+        handleStandardFile(wb, file.name);
+      }
+    } catch(err) {
+      st.innerHTML = `<span style="color:var(--red)">✗ Error leyendo fichero: ${err.message}</span>`;
+    }
+    input.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODO ESTÁNDAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+function handleStandardFile(wb, fileName) {
+  const st  = document.getElementById('import-status');
+  try {
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!rows.length) { st.innerHTML = '<span style="color:var(--orange)">⚠ Fichero vacío</span>'; return; }
+
+    const norm = rows.map(r => {
+      const obj = {};
+      Object.keys(r).forEach(k => {
+        obj[k.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')] = r[k];
+      });
+      return {
+        mes:      String(obj.mes   || '').toLowerCase().trim(),
+        año:      parseInt(obj.ano || obj.year || obj.año || 0),
+        cliente:  String(obj.cliente  || '').trim(),
+        producto: String(obj.producto || '').trim(),
+        unidades: parseFloat(obj.unidades || 0),
+        importe:  parseFloat(obj.importe  || 0)
+      };
+    }).filter(r => r.cliente && r.año > 2000 && r.importe !== 0);
+
+    if (!norm.length) {
+      st.innerHTML = '<span style="color:var(--orange)">⚠ Sin filas válidas. Revisa columnas.</span>';
+      return;
+    }
+    commitRows(norm, fileName, st);
+  } catch(err) {
+    st.innerHTML = `<span style="color:var(--red)">✗ Error: ${err.message}</span>`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODO NAVISION — Parser + Modal de confirmación
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lee el workbook Navision, parsea y abre el modal de confirmación.
+ * No importa nada hasta que el usuario confirma.
+ */
+function handleNavisionFile(wb, fileName) {
+  const st = document.getElementById('import-status');
+  try {
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: true });
+
+    const { rows, warnings, debug } = parseNavisionExcel(raw);
+
+    if (!rows.length) {
+      st.innerHTML = '<span style="color:var(--orange)">⚠ No se detectaron filas Navision válidas. ¿Es el formato correcto?</span>';
+      return;
+    }
+
+    navPendingRows = rows;
+    navPendingFile = fileName;
+    st.innerHTML = '';
+    openNavModal(rows, warnings, debug, fileName);
+  } catch(err) {
+    st.innerHTML = `<span style="color:var(--red)">✗ Error parseando Navision: ${err.message}</span>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVISION PARSER v3 — detección automática de columnas + parseUnits robusto
+// Pipeline: parseNavisionExcel → detectColumns → detectRowType → buildBlocks
+//           → normalizeRows
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Activa/desactiva todos los logs del parser Navision.
+ * false → consola limpia en producción.
+ * true  → console.table + console.warn detallados para diagnóstico.
+ */
+const NAV_DEBUG = false;
+
+/**
+ * Convierte cualquier valor de celda a número de forma robusta.
+ * Acepta: número nativo, entero, decimal, coma decimal, espacios.
+ *   1  /  "1"  /  " 1 "  /  "1,00"  /  "1.00"  /  "1.234,56"  →  número
+ * @param {any} val
+ * @returns {number|null}
+ */
+function parseUnits(val) {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val)
+    .trim()
+    .replace(/\s/g, '')             // espacios internos
+    .replace(/\.(?=\d{3})/g, '')    // separador de miles con punto → quitar
+    .replace(',', '.');             // coma decimal → punto
+  const v = parseFloat(cleaned);
+  return isNaN(v) ? null : v;
+}
+
+/**
+ * DETECCIÓN AUTOMÁTICA DE COLUMNAS
+ * Escanea las primeras 15 filas buscando una fila de encabezados.
+ * Devuelve un mapa { producto, descripcion, unidades, importe } con los índices
+ * de columna detectados. Si no encuentra encabezados usa los índices por defecto
+ * basados en la estructura real observada:
+ *   A(0)=ref  C(2)=desc  D(3)=unidades  G(6)=importe
+ *
+ * @param {any[][]} rawRows
+ * @returns {{ producto:number, descripcion:number, unidades:number, importe:number,
+ *             source: 'headers'|'default' }}
+ */
+function detectColumns(rawRows) {
+  // Mapas de sinónimos para cada campo (insensible a mayúsculas/acentos)
+  const SYNONYMS = {
+    producto:    /n[oº]?\s*(art[ií]culo|producto|ref)/i,
+    descripcion: /descripci[oó]n|nombre|producto/i,
+    unidades:    /cantidad|unidades|uds|cantfact|cant\.?\s*fac/i,
+    importe:     /^importe$|importe\s*(neto|fact|s\/dto)/i,
+  };
+
+  for (let i = 0; i < Math.min(15, rawRows.length); i++) {
+    const row = rawRows[i];
+    const found = {};
+    row.forEach((cell, colIdx) => {
+      const txt = String(cell ?? '').trim();
+      if (!txt) return;
+      for (const [field, rx] of Object.entries(SYNONYMS)) {
+        if (!found[field] && rx.test(txt)) found[field] = colIdx;
+      }
+    });
+    // Si encontramos al menos descripcion e importe, la fila es encabezado
+    if (found.descripcion !== undefined && found.importe !== undefined) {
+      if (NAV_DEBUG) console.log('NAV columnas detectadas desde encabezado (fila', i + 1, '):', found);
+      return { ...found, source: 'headers' };
+    }
+  }
+
+  // Fallback: estructura real observada en Navision
+  // A(0)=ref  C(2)=descripcion  D(3)=unidades  G(6)=importe
+  if (NAV_DEBUG) console.warn('NAV columnas: sin encabezado detectado → usando índices por defecto (A=0,C=2,D=3,G=6)');
+  return { producto: 0, descripcion: 2, unidades: 3, importe: 6, source: 'default' };
+}
+
+/**
+ * Orquesta el pipeline completo.
+ * @param {any[][]} rawRows  matriz de celdas (SheetJS array_of_arrays, raw:true)
+ * @returns {{ rows: object[], warnings: string[], debug: object }}
+ */
+function parseNavisionExcel(rawRows) {
+  const warnings = [];
+
+  // Resetear contador de debug para cada fichero nuevo
+  window._navDebugProdCount = 0;
+
+  // 0. Detectar columnas automáticamente
+  const columnas = detectColumns(rawRows);
+  if (columnas.source === 'default') {
+    warnings.push('No se encontró fila de encabezados — usando columnas por defecto (A=ref, C=desc, D=uds, G=importe).');
+  } else {
+  if (NAV_DEBUG) console.log('NAV usando columnas detectadas:', columnas);
+  }
+
+  // 1. Clasificar cada fila por su tipo estructural
+  const typed = rawRows.map((row, i) => detectRowType(row, i, columnas));
+
+  // 2. Construir registros cliente+producto por bloques
+  const { rows, debug } = buildBlocks(typed, warnings);
+
+  // 3. Normalizar campos al esquema de la app
+  const normalized = normalizeRows(rows, warnings);
+
+  return { rows: normalized, warnings, debug };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASO 1 — Clasificar fila por patrón estructural
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Tipos: 'client' | 'product' | 'ignore'
+ *
+ * Detecta clientes por: col B = código numérico, col C = nombre, sin importe.
+ * Detecta productos por: col A = referencia, col descripcion = texto, col importe = número.
+ * Unidades: lee desde columna detectada; fallback a columna siguiente si null.
+ *
+ * @param {any[]}  row      array de celdas de la fila
+ * @param {number} idx      índice de fila (para debug)
+ * @param {object} columnas mapa de índices detectado por detectColumns()
+ */
+function detectRowType(row, idx, columnas) {
+  const s = i => String(row[i] ?? '').trim();
+
+  const colA = s(0);                        // ref producto (siempre col A)
+  const colB = s(1);                        // código cliente (siempre col B)
+  const colC = s(2);                        // nombre cliente o desc (siempre col C)
+  const colD = s(3);                        // cont. nombre o unidades
+
+  // Importe: desde columna detectada, con fallback a G(6)
+  const colImporte = columnas.importe ?? 6;
+  const colG = parseUnits(row[colImporte]);
+
+  // ── Patrones de ignorar ────────────────────────────────────────────────
+  const allEmpty = row.every(c => c === null || c === undefined || String(c).trim() === '');
+  if (allEmpty) return { type: 'ignore', reason: 'vacía', idx, colA, colB, colC, colG };
+
+  const rowText = row.map(c => String(c ?? '').toLowerCase()).join(' ');
+  if (/tel[eé]f|n[oº]\s*tel/i.test(rowText))
+    return { type: 'ignore', reason: 'teléfono', idx, colA, colB, colC, colG };
+
+  if (/^(total|subtotal|suma|importe\s*total|grand\s*total)/i.test(colA) ||
+      /^(total|subtotal|suma|importe\s*total|grand\s*total)/i.test(colC))
+    return { type: 'ignore', reason: 'subtotal', idx, colA, colB, colC, colG };
+
+  if (/^(n[oº]?\s*art[íi]culo|ref|referencia|descripci[oó]n|producto|cantidad|unidades|importe)/i.test(colA) ||
+      /^(c[oó]d\.?\s*cliente|cliente|nombre)/i.test(colB))
+    return { type: 'ignore', reason: 'cabecera', idx, colA, colB, colC, colG };
+
+  // ── Patrón CLIENTE — sin cambios ───────────────────────────────────────
+  const bIsClientCode = /^\d{3,}$/.test(colB);
+  const hasClientName = colC.length > 1;
+  const aIsEmpty      = colA === '';
+  const gIsNull       = colG === null;
+
+  if (bIsClientCode && hasClientName && (aIsEmpty || gIsNull)) {
+    const nombre = [colC, colD].filter(Boolean).join(' ').trim();
+    return { type: 'client', idx, codigo: colB, nombre, colA, colB, colC, colG };
+  }
+
+  // ── Patrón PRODUCTO ────────────────────────────────────────────────────
+  const aIsRef     = colA.length >= 3 && colA.length <= 20;
+  const descIdx    = columnas.descripcion ?? 2;
+  const cHasDesc   = s(descIdx).length > 1;
+  const gHasImport = colG !== null && colG !== 0;
+
+  if (aIsRef && cHasDesc && gHasImport) {
+    // Leer unidades: columna detectada primero, fallback a la siguiente
+    const udsIdx      = columnas.unidades ?? 3;
+    const udsRaw      = row[udsIdx];
+    const udsFallback = row[udsIdx + 1];  // col inmediatamente siguiente como seguro
+    const unidades    = parseUnits(udsRaw) ?? parseUnits(udsFallback);
+
+    const descripcion = s(descIdx);
+
+    // ── DEBUG — solo activo si NAV_DEBUG === true ──────────────────────
+    if (NAV_DEBUG && window._navDebugProdCount < 20) {
+      console.log('NAV DEBUG fila', idx + 1);
+      console.table({
+        producto:           s(0),
+        descripcion,
+        unidadesRaw:        udsRaw,
+        unidadesDetectadas: unidades,
+        importe:            colG,
+      });
+      window._navDebugProdCount++;
+    }
+    if (NAV_DEBUG && colG !== null && unidades === null) {
+      console.warn('UNIDADES NO DETECTADAS fila', idx + 1, row);
+    }
+    // ── FIN DEBUG ──────────────────────────────────────────────────────
+
+    return {
+      type: 'product', idx,
+      ref:      colA,
+      desc:     descripcion,
+      uds:      unidades ?? 0,
+      importe:  colG,
+      colA, colB, colC, colG
+    };
+  }
+
+  return { type: 'ignore', reason: 'no reconocida', idx, colA, colB, colC, colG };
+}
+
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASO 2 — Construir registros por bloques cliente
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Itera las filas clasificadas en orden.
+ * Mantiene el cliente activo y lo asigna a cada producto encontrado.
+ * Cambia de cliente cuando detecta una fila tipo 'client'.
+ *
+ * @param {object[]} typed    filas con type asignado
+ * @param {string[]} warnings
+ * @returns {{ rows: object[], debug: object }}
+ */
+function buildBlocks(typed, warnings) {
+  let clienteActual    = '';
+  let codClienteActual = '';
+  const rows    = [];
+  const debug   = { clientes: [], productos: [], ignoradas: [] };
+  let sinCliente = 0;
+
+  typed.forEach(row => {
+    if (row.type === 'client') {
+      // Nuevo bloque de cliente
+      clienteActual    = row.nombre;
+      codClienteActual = row.codigo;
+      debug.clientes.push({ codigo: row.codigo, nombre: row.nombre, fila: row.idx + 1 });
+
+    } else if (row.type === 'product') {
+      if (!clienteActual) {
+        // Producto antes de cualquier cabecera de cliente → advertencia
+        sinCliente++;
+        debug.ignoradas.push({ fila: row.idx + 1, reason: 'producto sin cliente previo', ref: row.ref });
+        return;
+      }
+      rows.push({
+        cliente:    clienteActual,
+        codCliente: codClienteActual,
+        producto:   row.desc,  // descripción larga (col C)
+        ref:        row.ref,   // referencia corta (col A)
+        unidades:   row.uds,
+        importe:    row.importe
+      });
+      debug.productos.push({ fila: row.idx + 1, cliente: clienteActual, ref: row.ref, desc: row.desc });
+
+    } else {
+      // type === 'ignore'
+      debug.ignoradas.push({ fila: row.idx + 1, reason: row.reason || 'ignorada', colA: row.colA, colC: row.colC });
+    }
+  });
+
+  if (sinCliente > 0)
+    warnings.push(`${sinCliente} líneas de producto aparecen antes de cualquier cabecera de cliente y se han ignorado.`);
+
+  if (!debug.clientes.length)
+    warnings.push('No se detectó ninguna fila de cliente. Revisa que el fichero tenga la estructura Navision correcta.');
+
+  return { rows, debug };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASO 3 — Normalizar al esquema { cliente, producto, unidades, importe }
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Limpia y tipifica los campos. mes y año se añaden en confirmNavImport.
+ * @param {object[]} rows
+ * @param {string[]} warnings
+ * @returns {object[]}
+ */
+function normalizeRows(rows, warnings) {
+  let unidadesCero = 0;
+
+  const result = rows.map(row => {
+    // Nombre cliente: quitar código numérico de prefijo si lo arrastrara
+    const cliente = (row.cliente || '').trim().replace(/^\d{3,}\s+/, '').trim() || 'Sin nombre';
+
+    // Usar descripción (col C) como nombre de producto; si no, la ref (col A)
+    const producto = (row.producto || row.ref || '').trim().replace(/\s{2,}/g, ' ');
+
+    // Unidades: Navision puede exportar negativos (devoluciones); guardamos el valor con signo
+    let unidades = parseFloat(row.unidades) || 0;
+    if (unidades === 0) unidadesCero++;
+
+    // Importe: puede ser negativo (devolución)
+    const importe = parseFloat(row.importe) || 0;
+
+    return { cliente, producto, unidades, importe };
+  }).filter(r => r.producto && r.importe !== 0); // descartar líneas sin producto o importe nulo
+
+  if (unidadesCero > 0)
+    warnings.push(`${unidadesCero} líneas con unidades = 0 (posibles devoluciones o servicios). Se mantienen si tienen importe.`);
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// fillClientData y cleanInvalidRows se mantienen como stubs por compatibilidad
+// (ya no se usan en el nuevo pipeline pero otras referencias podrían llamarlos)
+// ─────────────────────────────────────────────────────────────────────────────
+function fillClientData(rows)    { return rows; } // no-op en v2
+function cleanInvalidRows(rows)  { return rows; } // no-op en v2
+function extractNavisionRows(r)  { return r;    } // no-op en v2
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODAL NAVISION — UI de confirmación
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Abre el modal con preview y selectores de mes/año */
+/** Estado del debug: datos para las pestañas */
+let navDebugData = null;
+
+/** Abre el modal con preview, warnings y panel de debug */
+function openNavModal(rows, warnings, debug, fileName) {
+  // Guardar debug para el panel
+  navDebugData = debug;
+
+  // ── Poblar selectores mes/año ────────────────────────────────────────────
+  const selMes = document.getElementById('nav-mes');
+  const selAño = document.getElementById('nav-año');
+  selMes.innerHTML = '<option value="">— mes —</option>' +
+    MESES_ORD.map(m => `<option value="${m}">${m.charAt(0).toUpperCase() + m.slice(1)}</option>`).join('');
+  selAño.innerHTML = '<option value="">— año —</option>';
+  const currentYear_ = new Date().getFullYear();
+  for (let y = currentYear_ - 3; y <= currentYear_ + 1; y++) {
+    selAño.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+  // Autodetectar año/mes desde el nombre del fichero
+  const fileMatch = fileName.match(/(\d{4})[_\-.]?(\d{1,2})/);
+  if (fileMatch) {
+    const [, y, m] = fileMatch;
+    const mesName = MESES_ORD[parseInt(m) - 1];
+    if (mesName) selMes.value = mesName;
+    selAño.value = y;
+  } else {
+    const now = new Date();
+    const prevMes = (now.getMonth() - 1 + 12) % 12;
+    selMes.value = MESES_ORD[prevMes];
+    selAño.value = prevMes === 11 ? now.getFullYear() - 1 : now.getFullYear();
+  }
+
+  // ── KPI resumen ──────────────────────────────────────────────────────────
+  const uniqueClientes = new Set(rows.map(r => r.cliente)).size;
+  const uniqueProds    = new Set(rows.map(r => r.producto)).size;
+  const totalImp       = rows.reduce((s, r) => s + (r.importe || 0), 0);
+  document.getElementById('nav-preview-info').innerHTML =
+    `<strong style="color:var(--text)">${rows.length}</strong> filas limpias · ` +
+    `<strong style="color:var(--text)">${uniqueClientes}</strong> clientes · ` +
+    `<strong style="color:var(--text)">${uniqueProds}</strong> referencias · ` +
+    `Total: <strong style="color:var(--accent)">${fmt(totalImp)}</strong> · ` +
+    `<span style="color:var(--text3)">${debug.ignoradas.length} filas ignoradas</span>`;
+
+  // ── Preview tabla ────────────────────────────────────────────────────────
+  const tbody = document.getElementById('nav-preview-body');
+  tbody.innerHTML = rows.slice(0, 50).map(r => `<tr>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.cliente}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${r.producto}</td>
+    <td class="vtd-r">${fmtN(r.unidades)}</td>
+    <td class="vtd-r">${fmt(r.importe)}</td>
+  </tr>`).join('') +
+  (rows.length > 50 ? `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:10px">… y ${rows.length - 50} filas más</td></tr>` : '');
+
+  // ── Warnings ─────────────────────────────────────────────────────────────
+  const warnEl = document.getElementById('nav-warnings');
+  warnEl.style.display = 'block';
+  warnEl.innerHTML = warnings.length
+    ? warnings.map(w => `<div class="nav-warning-row warn">⚠ ${w}</div>`).join('')
+    : '<div class="nav-warning-row ok">✓ Fichero limpio sin advertencias</div>';
+
+  // ── Debug panel: resetear a pestaña clientes ──────────────────────────────
+  document.getElementById('nav-debug-panel').style.display = 'none';
+  showDebugTab('clientes', document.querySelector('.nav-debug-tab'));
+
+  document.getElementById('nav-modal-fname').textContent = fileName;
+  document.getElementById('nav-modal-status').textContent = '';
+  document.getElementById('nav-modal-overlay').style.display = 'flex';
+}
+
+/** Muestra/oculta el panel de debug */
+function toggleNavDebug() {
+  const panel = document.getElementById('nav-debug-panel');
+  const visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  if (!visible) showDebugTab('clientes', document.querySelector('.nav-debug-tab'));
+}
+
+/**
+ * Renderiza la pestaña de debug activa.
+ * @param {'clientes'|'productos'|'ignoradas'} tab
+ * @param {HTMLElement} el  elemento tab clicado
+ */
+function showDebugTab(tab, el) {
+  document.querySelectorAll('.nav-debug-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const body = document.getElementById('nav-debug-body');
+  if (!navDebugData) { body.innerHTML = ''; return; }
+
+  if (tab === 'clientes') {
+    body.innerHTML = navDebugData.clientes.length
+      ? navDebugData.clientes.map(c =>
+          `<div class="nav-debug-row cl">
+            <span class="nav-debug-fila">fila ${c.fila}</span>
+            <span>${c.codigo}</span>
+            <span>${c.nombre}</span>
+          </div>`).join('')
+      : '<div style="padding:12px;color:var(--text3)">Sin clientes detectados</div>';
+  } else if (tab === 'productos') {
+    body.innerHTML = navDebugData.productos.length
+      ? navDebugData.productos.slice(0, 200).map(p =>
+          `<div class="nav-debug-row pr">
+            <span class="nav-debug-fila">fila ${p.fila}</span>
+            <span style="color:var(--text3)">${p.ref}</span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.cliente}">${p.desc}</span>
+          </div>`).join('') +
+        (navDebugData.productos.length > 200 ? `<div style="padding:8px 10px;color:var(--text3)">… ${navDebugData.productos.length - 200} más</div>` : '')
+      : '<div style="padding:12px;color:var(--text3)">Sin productos detectados</div>';
+  } else {
+    body.innerHTML = navDebugData.ignoradas.length
+      ? navDebugData.ignoradas.slice(0, 200).map(r =>
+          `<div class="nav-debug-row ig">
+            <span class="nav-debug-fila">fila ${r.fila}</span>
+            <span style="color:var(--orange)">${r.reason}</span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${[r.colA, r.colC].filter(Boolean).join(' · ')}</span>
+          </div>`).join('') +
+        (navDebugData.ignoradas.length > 200 ? `<div style="padding:8px 10px;color:var(--text3)">… ${navDebugData.ignoradas.length - 200} más</div>` : '')
+      : '<div style="padding:12px;color:var(--green)">Sin filas ignoradas</div>';
+  }
+}
+
+function closeNavModal() {
+  document.getElementById('nav-modal-overlay').style.display = 'none';
+  navPendingRows = [];
+  navPendingFile = '';
+}
+
+/** Confirma la importación Navision: añade mes/año y llama a commitRows */
+function confirmNavImport() {
+  const mes = document.getElementById('nav-mes').value;
+  const año = parseInt(document.getElementById('nav-año').value);
+  const statusEl = document.getElementById('nav-modal-status');
+
+  if (!mes) { statusEl.innerHTML = '<span style="color:var(--red)">Selecciona el mes</span>'; return; }
+  if (!año || año < 2000) { statusEl.innerHTML = '<span style="color:var(--red)">Selecciona el año</span>'; return; }
+
+  // Añadir mes y año a cada fila
+  const final = navPendingRows.map(r => ({ mes, año, ...r }));
+  const fileName = navPendingFile;
+
+  closeNavModal();
+  commitRows(final, fileName, document.getElementById('import-status'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMIT — Guardar filas en DB (compartido por ambos modos)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Persiste las filas limpias en DB, deduplicando por año+mes.
+ * @param {object[]} rows   filas con { mes, año, cliente, producto, unidades, importe }
+ * @param {string}   fileName
+ * @param {HTMLElement} statusEl
+ */
+// ═══════════════════════════════════════════════════════════════════════════
+// PROTECCIÓN ANTI-DUPLICADOS + GESTIÓN DE PERIODOS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Comprueba si ya existen datos en DB para un año y mes concretos.
+ * @param {number} year
+ * @param {string} month  nombre de mes en minúsculas ('enero', 'febrero'…)
+ * @returns {{ exists: boolean, count: number }}
+ */
+function checkExistingPeriod(year, month) {
+  const count = DB.filter(r => r.año === year && r.mes === month).length;
+  return { exists: count > 0, count };
+}
+
+/** Muestra el modal de duplicado con info del periodo bloqueado */
+function showDupModal(periodoLabel, count) {
+  document.getElementById('dup-periodo').textContent = periodoLabel;
+  document.getElementById('dup-count').textContent   = count.toLocaleString('es-ES') + ' registros';
+  document.getElementById('dup-modal-overlay').style.display = 'flex';
+}
+
+/** Cierra el modal de duplicado */
+function closeDupModal() {
+  document.getElementById('dup-modal-overlay').style.display = 'none';
+}
+
+// ── PERIOD MANAGER ────────────────────────────────────────────────────────
+
+/**
+ * Renderiza la lista de periodos disponibles para eliminar.
+ * Cada fila muestra: periodo, nº registros y botón de eliminar.
+ */
+function renderPeriodManager() {
+  const el = document.getElementById('pm-list');
+  if (!el) return;
+
+  if (!DB.length) {
+    el.innerHTML = '<div class="pm-empty">Sin datos importados aún.</div>';
+    return;
+  }
+
+  // Agrupar por año+mes, ordenar cronológicamente
+  const periodos = {};
+  DB.forEach(r => {
+    const key = `${r.año}|${r.mes}`;
+    periodos[key] = (periodos[key] || 0) + 1;
+  });
+
+  const sorted = Object.entries(periodos)
+    .map(([key, count]) => {
+      const [año, mes] = key.split('|');
+      return { año: parseInt(año), mes, count, key };
+    })
+    .sort((a, b) => b.año - a.año || MESES_ORD.indexOf(b.mes) - MESES_ORD.indexOf(a.mes));
+
+  el.innerHTML = sorted.map(p => `
+    <div class="pm-row">
+      <div class="pm-row-info">
+        <span class="pm-row-label">${p.mes} ${p.año}</span>
+        <span class="pm-row-count">${p.count.toLocaleString('es-ES')} registros</span>
+      </div>
+      <button class="pm-del-btn" onclick="deletePeriod(${p.año},'${p.mes}')">🗑 Eliminar</button>
+    </div>`).join('');
+}
+
+/**
+ * Elimina todos los registros de un periodo tras confirmación explícita.
+ * @param {number} year
+ * @param {string} month
+ */
+function deletePeriod(year, month) {
+  const count = DB.filter(r => r.año === year && r.mes === month).length;
+  const label = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
+
+  if (!confirm(`¿Seguro que deseas eliminar ${label}?\n\nSe eliminarán ${count.toLocaleString('es-ES')} registros.\n\nEsta acción no se puede deshacer.`)) return;
+
+  DB = DB.filter(r => !(r.año === year && r.mes === month));
+  saveUserDB(currentUser.id, DB);
+  updateStatus(); buildYearPills(); renderAlertas(); renderPeriodManager();
+
+  const st = document.getElementById('import-status');
+  if (st) st.innerHTML = `<span style="color:var(--orange)">🗑 ${label} eliminado (${count.toLocaleString('es-ES')} registros).</span>`;
+}
+
+// ── COMMIT — con protección anti-duplicados ───────────────────────────────
+
+/**
+ * Persiste las filas limpias en DB.
+ * BLOQUEA la importación si algún periodo ya existe — sin fusionar ni sobrescribir.
+ * @param {object[]} rows   filas con { mes, año, cliente, producto, unidades, importe }
+ * @param {string}   fileName
+ * @param {HTMLElement} statusEl
+ */
+function commitRows(rows, fileName, statusEl) {
+  if (!rows.length) {
+    statusEl.innerHTML = '<span style="color:var(--orange)">⚠ Sin filas válidas para importar.</span>';
+    return;
+  }
+
+  // Obtener los periodos únicos que traen las filas nuevas
+  const combos = [...new Set(rows.map(r => `${r.año}|${r.mes}`))];
+
+  // ── COMPROBACIÓN ANTI-DUPLICADOS ──────────────────────────────────────
+  for (const combo of combos) {
+    const [yearStr, mes] = combo.split('|');
+    const year = parseInt(yearStr);
+    const { exists, count } = checkExistingPeriod(year, mes);
+    if (exists) {
+      // Cancelar inmediatamente — mostrar modal informativo
+      const mesLabel = mes.charAt(0).toUpperCase() + mes.slice(1);
+      const periodoLabel = `${mesLabel} ${year}`;
+      statusEl.innerHTML = `<span style="color:var(--red)">⛔ Importación cancelada — ${periodoLabel} ya existe.</span>`;
+      showDupModal(periodoLabel, count);
+      return;   // no importar nada
+    }
+  }
+
+  // ── IMPORTAR — solo si ningún periodo existe ya ───────────────────────
+  DB = [...DB, ...rows].sort((a, b) =>
+    a.año - b.año || MESES_ORD.indexOf(a.mes) - MESES_ORD.indexOf(b.mes)
+  );
+  importHistory.unshift({
+    date:     new Date().toLocaleString('es-ES'),
+    file:     fileName,
+    rows:     rows.length,
+    periodos: combos.map(c => c.replace('|', ' ')),
+    modo:     importMode === 'nav' ? 'Navision' : 'Estándar'
+  });
+  saveUserDB(currentUser.id, DB);
+  saveUserHistory(currentUser.id, importHistory);
+  updateStatus(); buildYearPills(); renderAlertas(); renderHistory(); renderPeriodManager();
+  statusEl.innerHTML = `<span style="color:var(--green)">✓ ${rows.length} registros importados${importMode === 'nav' ? ' (Navision)' : ''}</span>`;
+}
+
+
+
+
+
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('file-input').files=dt.files;handleFile(document.getElementById('file-input'));}
+});
+
+function renderHistory(){
+  const el=document.getElementById('import-history');
+  if(!importHistory.length){el.textContent='Sin importaciones aún.';renderPeriodManager();return;}
+  el.innerHTML=importHistory.map(h=>`
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="color:var(--text);font-size:12px;font-weight:500">${h.file}</div>
+      <div style="color:var(--text3);font-size:10.5px;margin-top:2px">${h.date} · ${h.rows} registros · ${(h.periodos||[]).slice(0,4).join(', ')}${(h.periodos||[]).length>4?'…':''}</div>
+    </div>`).join('');
+  renderPeriodManager();
+}
+
+function clearUserData(){
+  if(!currentUser)return;
+  if(!confirm(`¿Borrar todos los datos de ${currentUser.name}?`))return;
+  DB=[];importHistory=[];
+  deleteUserData(currentUser.id);
+  updateStatus();buildYearPills();
+  document.getElementById('import-status').innerHTML='<span style="color:var(--orange)">Datos borrados.</span>';
+  renderHistory();renderAlertas();renderPeriodManager();
+  document.getElementById('kpi-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">▦</div><div class="empty-title">Sin datos. Importa tu primer Excel.</div></div>`;
+}
+
+// ── STATUS ─────────────────────────────────────────────────────────────────
+function updateStatus(){
+  const el=document.getElementById('db-status');
+  if(!DB.length){el.textContent='Sin datos cargados';return;}
+  const años=getYears(),ncl=[...new Set(DB.map(r=>r.cliente))].length;
+  el.innerHTML=`${DB.length.toLocaleString('es-ES')} registros<br>${años.join(' · ')}<br>${ncl} clientes`;
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+const fmt=n=>(n||0).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0})+' €';
+const fmtN=n=>(n||0).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmtK=n=>n>=1000?(n/1000).toFixed(0)+'k':fmtN(n);
+function pct(a,b){if(!b)return'—';const p=((a-b)/b*100);return(p>=0?'+':'')+p.toFixed(1)+'%';}
+function groupBy(arr,key){return arr.reduce((acc,r)=>{acc[r[key]]=(acc[r[key]]||[]).concat(r);return acc;},{});}
+function sumI(arr){return arr.reduce((s,r)=>s+(r.importe||0),0);}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+const cDefaults={responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.y??c.parsed.x)}`}}},
+  scales:{x:{ticks:{color:'#5a5e76',font:{size:10}},grid:{color:'#2a2d3e22'}},
+    y:{ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)+'€'},grid:{color:'#2a2d3e'}}}};
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
+function renderDashboard(){
+  if(!DB.length)return;
+  const data=filtered(),años=getYears();
+  const totalV=sumI(data),totalU=data.reduce((s,r)=>s+(r.unidades||0),0);
+  const nCl=new Set(data.map(r=>r.cliente)).size,nRef=new Set(data.map(r=>r.producto)).size;
+  let badge='';
+  if(currentYear!=='todos'&&años.includes(currentYear-1)){
+    const prev=sumI(DB.filter(r=>r.año===currentYear-1));
+    const p=((totalV-prev)/prev*100).toFixed(1);
+    badge=`<span class="kpi-badge ${p>=0?'up':'down'}">${p>=0?'+':''}${p}% vs ${currentYear-1}</span>`;
+  }
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="card"><div class="card-title">Ventas totales</div><div class="kpi-val">${fmtK(totalV)} €</div>${badge}<div class="kpi-sub">${currentYear==='todos'?años.join('–'):currentYear}</div></div>
+    <div class="card"><div class="card-title">Unidades</div><div class="kpi-val">${fmtK(totalU)}</div><div class="kpi-sub">despachadas</div></div>
+    <div class="card"><div class="card-title">Clientes activos</div><div class="kpi-val">${nCl}</div><div class="kpi-sub">con pedidos</div></div>
+    <div class="card"><div class="card-title">Referencias</div><div class="kpi-val">${nRef}</div><div class="kpi-sub">productos distintos</div></div>`;
+  const añosMostrar=currentYear==='todos'?años:[currentYear];
+  destroyChart('c-lineas');
+  charts['c-lineas']=new Chart(document.getElementById('c-lineas'),{type:'line',
+    data:{labels:MESES_C,datasets:añosMostrar.map((a,i)=>({
+      label:String(a),borderColor:PAL[i],backgroundColor:PAL[i]+'18',borderWidth:2,tension:.35,
+      pointRadius:2,fill:añosMostrar.length===1,spanGaps:false,
+      data:MESES_ORD.map(m=>{const v=sumI(DB.filter(r=>r.año===a&&r.mes===m));return v>0?v:null;})
+    }))},
+    options:{...cDefaults,plugins:{legend:{display:añosMostrar.length>1,labels:{font:{size:10},color:'#8b8fa8',boxWidth:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}
+  });
+  const topCl=Object.entries(groupBy(data,'cliente')).map(([k,v])=>({k,v:sumI(v)})).sort((a,b)=>b.v-a.v).slice(0,8);
+  destroyChart('c-clientes');
+  charts['c-clientes']=new Chart(document.getElementById('c-clientes'),{type:'bar',
+    data:{labels:topCl.map(d=>d.k.length>20?d.k.slice(0,19)+'…':d.k),datasets:[{data:topCl.map(d=>d.v),backgroundColor:topCl.map((_,i)=>PAL[i]+'cc'),borderRadius:4}]},
+    options:{...cDefaults,indexAxis:'y',scales:{x:{...cDefaults.scales.x,ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)}},y:{ticks:{color:'#8b8fa8',font:{size:10}}}}}
+  });
+  const topPr=Object.entries(groupBy(data,'producto')).map(([k,v])=>({k,v:sumI(v)})).sort((a,b)=>b.v-a.v).slice(0,8);
+  destroyChart('c-productos');
+  charts['c-productos']=new Chart(document.getElementById('c-productos'),{type:'bar',
+    data:{labels:topPr.map(d=>d.k.length>22?d.k.slice(0,21)+'…':d.k),datasets:[{data:topPr.map(d=>d.v),backgroundColor:topPr.map((_,i)=>PAL[(i+4)%PAL.length]+'cc'),borderRadius:4}]},
+    options:{...cDefaults,indexAxis:'y',scales:{x:{...cDefaults.scales.x,ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)}},y:{ticks:{color:'#8b8fa8',font:{size:10}}}}}
+  });
+  const anual=años.map(a=>({a,v:sumI(DB.filter(r=>r.año===a))}));
+  destroyChart('c-anual');
+  charts['c-anual']=new Chart(document.getElementById('c-anual'),{type:'bar',
+    data:{labels:anual.map(d=>String(d.a)),datasets:[{data:anual.map(d=>d.v),backgroundColor:anual.map((_,i)=>PAL[i]+'cc'),borderRadius:6}]},
+    options:{...cDefaults,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.y)}`}}},
+      scales:{x:{ticks:{color:'#5a5e76',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)+'€'},grid:{color:'#2a2d3e'}}}}
+  });
+}
+
+// ── CLIENTES ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SEARCHABLE CLIENT DROPDOWN — v2
+// API pública: renderClientSearch() · filterClients() · selectClient(name)
+//              closeClientDropdown() · clearClientSearch()
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Nombre del cliente actualmente seleccionado (fuente de verdad) */
+let selectedClientName = '';
+/** Índice de opción con foco de teclado en el dropdown */
+let csFocusIdx = -1;
+
+/**
+ * Construye el objeto de metadatos de cada cliente una sola vez.
+ * Devuelve array ordenado por facturación descendente.
+ * @returns {{ name: string, revenue: number, lastYear: number }[]}
+ */
+function buildClientIndex() {
+  const map = {};
+  DB.forEach(r => {
+    if (!map[r.cliente]) map[r.cliente] = { name: r.cliente, revenue: 0, lastYear: 0 };
+    map[r.cliente].revenue += r.importe || 0;
+    if (r.año > map[r.cliente].lastYear) map[r.cliente].lastYear = r.año;
+  });
+  return Object.values(map).sort((a, b) => b.revenue - a.revenue);
+}
+
+/**
+ * Escapa caracteres especiales de regex en un string.
+ */
+function escapeRx(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/**
+ * Marca en negrita las partes del texto que coinciden con la query.
+ * @param {string} text    texto original
+ * @param {string} query   búsqueda
+ */
+function highlightMatch(text, query) {
+  if (!query) return text;
+  const rx = new RegExp(`(${escapeRx(query)})`, 'gi');
+  return text.replace(rx, '<span class="cs-match">$1</span>');
+}
+
+/**
+ * Abre el dropdown y enfoca el input.
+ * Llamado también al hacer clic en la fila de input.
+ */
+function openClientDropdown() {
+  if (!DB.length) return;
+  const wrap = document.getElementById('cs-wrap');
+  const drop = document.getElementById('cs-dropdown');
+  wrap.classList.add('open');
+  drop.style.display = 'block';
+  document.getElementById('cs-input').focus();
+  filterClients();       // renderiza la lista con el texto actual
+  csFocusIdx = -1;
+}
+
+/**
+ * Cierra el dropdown sin cambiar la selección.
+ */
+function closeClientDropdown() {
+  document.getElementById('cs-wrap').classList.remove('open');
+  document.getElementById('cs-dropdown').style.display = 'none';
+  csFocusIdx = -1;
+}
+
+/**
+ * Filtra la lista de clientes según el texto en el input y re-renderiza el dropdown.
+ * Respeta máximo 10 resultados visibles (scroll para el resto).
+ */
+function filterClients() {
+  const query  = (document.getElementById('cs-input').value || '').trim();
+  const list   = document.getElementById('cs-list');
+  const clearBtn = document.getElementById('cs-clear');
+  clearBtn.style.display = query ? 'block' : 'none';
+
+  const all    = buildClientIndex();
+  const lowerQ = query.toLowerCase();
+
+  // Filtrar por coincidencia parcial, case-insensitive
+  const results = query
+    ? all.filter(c => c.name.toLowerCase().includes(lowerQ))
+    : all;
+
+  csFocusIdx = -1;
+
+  if (!results.length) {
+    list.innerHTML = '<div class="cs-no-results">Sin coincidencias</div>';
+    return;
+  }
+
+  list.innerHTML = results.map((c, i) => {
+    const isSelected = c.name === selectedClientName;
+    const nameHL = highlightMatch(c.name, query);
+    return `<div
+      class="cs-option${isSelected ? ' selected' : ''}"
+      data-idx="${i}"
+      data-name="${c.name.replace(/"/g,'&quot;')}"
+      onmousedown="selectClient('${c.name.replace(/'/g,"\\'")}')">
+      <div class="cs-opt-left">
+        <div class="cs-opt-name">${nameHL}</div>
+      </div>
+      <div class="cs-opt-right">
+        <div class="cs-opt-revenue">${fmtK(c.revenue)} €</div>
+        <div class="cs-opt-year">hasta ${c.lastYear}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/**
+ * Selecciona un cliente, cierra el dropdown y dispara renderCliente().
+ * @param {string} name   nombre exacto del cliente
+ */
+function selectClient(name) {
+  selectedClientName = name;
+
+  // Actualizar input y chip
+  const input = document.getElementById('cs-input');
+  input.value = '';
+  document.getElementById('cs-clear').style.display = 'none';
+
+  const chip = document.getElementById('cs-chip');
+  document.getElementById('cs-chip-name').textContent = name;
+  document.getElementById('cs-chip-row').style.display = 'block';
+  chip.title = name;
+
+  closeClientDropdown();
+
+  // Poblar selectores de año ahora que hay cliente
+  _populateYearSelects();
+  document.getElementById('cl-year-filters').style.display = 'flex';
+
+  renderCliente();
+}
+
+/**
+ * Limpia la búsqueda y la selección, volviendo al estado vacío.
+ * @param {Event} [e]  si viene de click, stopPropagation para no reabrir
+ */
+function clearClientSearch(e) {
+  if (e) e.stopPropagation();
+  selectedClientName = '';
+  document.getElementById('cs-input').value = '';
+  document.getElementById('cs-clear').style.display = 'none';
+  document.getElementById('cs-chip-row').style.display = 'none';
+  document.getElementById('cl-year-filters').style.display = 'none';
+  closeClientDropdown();
+  document.getElementById('cliente-view').innerHTML =
+    '<div class="empty"><div class="empty-icon">◎</div><div class="empty-title">Busca y selecciona un cliente</div><div class="empty-sub">Escribe en el buscador o pulsa para ver todos</div></div>';
+}
+
+/**
+ * Navegación por teclado en el dropdown.
+ * Flechas ↑↓ mueven el foco; Enter selecciona; Escape cierra.
+ */
+function csKeyNav(e) {
+  const drop = document.getElementById('cs-dropdown');
+  const items = document.querySelectorAll('#cs-list .cs-option');
+  if (!items.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (drop.style.display === 'none') openClientDropdown();
+    csFocusIdx = Math.min(csFocusIdx + 1, items.length - 1);
+    _applyFocus(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    csFocusIdx = Math.max(csFocusIdx - 1, 0);
+    _applyFocus(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (csFocusIdx >= 0 && items[csFocusIdx]) {
+      selectClient(items[csFocusIdx].dataset.name);
+    } else if (items.length === 1) {
+      selectClient(items[0].dataset.name);
+    }
+  } else if (e.key === 'Escape') {
+    closeClientDropdown();
+    document.getElementById('cs-input').blur();
+  }
+}
+
+/** Aplica la clase .focused al item activo y hace scroll para mostrarlo */
+function _applyFocus(items) {
+  items.forEach((el, i) => el.classList.toggle('focused', i === csFocusIdx));
+  if (items[csFocusIdx]) {
+    items[csFocusIdx].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+/** Puebla los <select> de año una vez que hay cliente seleccionado */
+/** Puebla los selectores de año y meses con defaults inteligentes */
+function _populateYearSelects() {
+  const años = getYears();
+  const sa    = document.getElementById('sel-cl-año');
+  const scomp = document.getElementById('sel-cl-comp');
+  const prevAño  = sa?.value;
+  const prevComp = scomp?.value;
+  const añoOpts  = años.map(a => `<option value="${a}">${a}</option>`).join('');
+  sa.innerHTML    = '<option value="">— año —</option>' + añoOpts;
+  scomp.innerHTML = '<option value="">Sin comparar</option>' + añoOpts;
+  if (prevAño  && años.includes(+prevAño))  sa.value    = prevAño;
+  if (prevComp && años.includes(+prevComp)) scomp.value = prevComp;
+  if (!sa.value    && años.length)     sa.value    = años[años.length - 1];
+  if (!scomp.value && años.length > 1) scomp.value = años[años.length - 2];
+  _populateMonthSelects();
+}
+
+/** Rellena los 4 selectores de mes según los años activos */
+function _populateMonthSelects() {
+  const añoA = parseInt(document.getElementById('sel-cl-año')?.value)  || null;
+  const añoB = parseInt(document.getElementById('sel-cl-comp')?.value) || null;
+  const mesesA = añoA ? getMesesImportados(añoA) : MESES_ORD;
+  const mesesB = añoB ? getMesesImportados(añoB) : MESES_ORD;
+  _fillMonthSelect('sel-cl-m0', mesesA, mesesA[0],                  document.getElementById('sel-cl-m0')?.value);
+  _fillMonthSelect('sel-cl-m1', mesesA, mesesA[mesesA.length - 1],  document.getElementById('sel-cl-m1')?.value);
+  _fillMonthSelect('sel-cl-m2', mesesB, mesesB[0],                  document.getElementById('sel-cl-m2')?.value);
+  _fillMonthSelect('sel-cl-m3', mesesB, mesesB[mesesB.length - 1],  document.getElementById('sel-cl-m3')?.value);
+}
+
+function _fillMonthSelect(id, meses, defaultVal, currentVal) {
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = meses.map(m =>
+    `<option value="${m}">${MESES_C[MESES_ORD.indexOf(m)]}</option>`
+  ).join('');
+  if (currentVal && meses.includes(currentVal)) el.value = currentVal;
+  else if (defaultVal) el.value = defaultVal;
+}
+
+/** Cuando cambia el año B, sincroniza los meses de B y re-renderiza */
+function syncPeriodB() {
+  const añoB  = parseInt(document.getElementById('sel-cl-comp')?.value) || null;
+  const mesesB = añoB ? getMesesImportados(añoB) : MESES_ORD;
+  _fillMonthSelect('sel-cl-m2', mesesB, mesesB[0],                  document.getElementById('sel-cl-m2')?.value);
+  _fillMonthSelect('sel-cl-m3', mesesB, mesesB[mesesB.length - 1],  document.getElementById('sel-cl-m3')?.value);
+  renderCliente();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PERIOD HELPERS — reutilizables
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Devuelve los meses del tramo [mesInicio, mesFin] presentes en el año dado.
+ * Si no se pasa año, devuelve el tramo sin filtrar por importaciones.
+ * Tolera orden invertido. No lanza errores si los meses no existen.
+ * @param {string} mesInicio
+ * @param {string} mesFin
+ * @param {number|null} año
+ * @returns {string[]}
+ */
+function filterByPeriod(mesInicio, mesFin, año = null) {
+  const iS = MESES_ORD.indexOf(mesInicio);
+  const iE = MESES_ORD.indexOf(mesFin);
+  if (iS < 0 || iE < 0) return [];
+  const [from, to] = iS <= iE ? [iS, iE] : [iE, iS];
+  let meses = MESES_ORD.slice(from, to + 1);
+  if (año) {
+    const importados = new Set(DB.filter(r => r.año === año).map(r => r.mes));
+    meses = meses.filter(m => importados.has(m));
+  }
+  return meses;
+}
+
+/**
+ * Agrega importe, unidades y set de referencias de un array de filas DB.
+ * @param {object[]} rows
+ * @returns {{ importe: number, unidades: number, refs: Set<string> }}
+ */
+function comparePeriods(rows) {
+  return {
+    importe:  rows.reduce((s, r) => s + (r.importe  || 0), 0),
+    unidades: rows.reduce((s, r) => s + (r.unidades || 0), 0),
+    refs:     new Set(rows.map(r => r.producto))
+  };
+}
+
+/**
+ * Genera la etiqueta legible de un tramo.
+ * @param {string[]} meses
+ * @param {number}   año
+ * @returns {string}  ej: "Ene–Abr 2026"
+ */
+function getPeriodLabel(meses, año) {
+  if (!meses.length) return String(año);
+  const first = MESES_C[MESES_ORD.indexOf(meses[0])];
+  const last  = MESES_C[MESES_ORD.indexOf(meses[meses.length - 1])];
+  return first === last ? `${first} ${año}` : `${first}–${last} ${año}`;
+}
+
+/**
+ * Inicializa o refresca el buscador al entrar en Clientes.
+ * Preserva la selección si ya había cliente activo.
+ */
+function renderClientSearch() {
+  if (selectedClientName && DB.some(r => r.cliente === selectedClientName)) {
+    _populateYearSelects();
+    document.getElementById('cl-year-filters').style.display = 'flex';
+    document.getElementById('cs-chip-row').style.display = 'block';
+    document.getElementById('cs-chip-name').textContent = selectedClientName;
+    renderCliente();
+  } else {
+    selectedClientName = '';
+    document.getElementById('cl-year-filters').style.display = 'none';
+    document.getElementById('cs-chip-row').style.display = 'none';
+    document.getElementById('cs-input').value = '';
+    document.getElementById('cs-clear').style.display = 'none';
+  }
+  setTimeout(() => document.getElementById('cs-input')?.focus(), 80);
+}
+const renderSelectores = renderClientSearch;
+
+// ── CLIENTE — renderCliente con comparativa por periodo exacto ───────────────
+function renderCliente() {
+  const cliente = selectedClientName;
+  const cont    = document.getElementById('cliente-view');
+  if (!cliente) {
+    cont.innerHTML = '<div class="empty"><div class="empty-icon">◎</div><div class="empty-title">Selecciona un cliente</div></div>';
+    return;
+  }
+
+  // Leer selectores
+  const añoA = parseInt(document.getElementById('sel-cl-año')?.value)  || null;
+  const añoB = parseInt(document.getElementById('sel-cl-comp')?.value) || null;
+  const m0   = document.getElementById('sel-cl-m0')?.value  || 'enero';
+  const m1   = document.getElementById('sel-cl-m1')?.value  || 'diciembre';
+  const m2   = document.getElementById('sel-cl-m2')?.value  || 'enero';
+  const m3   = document.getElementById('sel-cl-m3')?.value  || 'diciembre';
+
+  // Tramos de meses (solo los realmente importados en ese año)
+  const mesesA = añoA ? filterByPeriod(m0, m1, añoA) : [];
+  const mesesB = añoB ? filterByPeriod(m2, m3, añoB) : [];
+
+  // Filas filtradas
+  const rowsAll = DB.filter(r => r.cliente === cliente);
+  const rowsA   = añoA ? rowsAll.filter(r => r.año === añoA && mesesA.includes(r.mes)) : rowsAll;
+  const rowsB   = añoB ? rowsAll.filter(r => r.año === añoB && mesesB.includes(r.mes)) : null;
+
+  const aggA = comparePeriods(rowsA);
+  const aggB = rowsB ? comparePeriods(rowsB) : null;
+
+  const añosCl = [...new Set(rowsAll.map(r => r.año))].sort();
+
+  // Labels
+  const labelA  = añoA ? getPeriodLabel(mesesA, añoA) : 'Acumulado';
+  const labelB  = añoB ? getPeriodLabel(mesesB, añoB) : null;
+  const hasComp = aggB !== null && labelB;
+
+  // Diferencias
+  const difI  = hasComp ? aggA.importe  - aggB.importe  : null;
+  const difU  = hasComp ? aggA.unidades - aggB.unidades : null;
+  const pctI  = hasComp && aggB.importe  ? pct(aggA.importe,  aggB.importe)  : null;
+  const pctU  = hasComp && aggB.unidades ? pct(aggA.unidades, aggB.unidades) : null;
+  const isDown = difI !== null && difI < 0;
+
+  // ── Tramo banner ────────────────────────────────────────────────────────
+  const tramoBanner = `
+    <div class="period-tramo">
+      <span class="tramo-pill tramo-pill-a">A · ${labelA}</span>
+      ${hasComp ? `<span class="tramo-sep">vs</span><span class="tramo-pill tramo-pill-b">B · ${labelB}</span>` : ''}
+    </div>`;
+
+  // ── KPIs ────────────────────────────────────────────────────────────────
+  const kpiHTML = `
+    <div class="grid3" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">Facturación · A</div>
+        <div class="kpi-val">${fmtK(aggA.importe)} €</div>
+        ${hasComp ? `<span class="kpi-badge ${isDown ? 'down' : 'up'}">${pctI} vs B</span>` : ''}
+        <div class="kpi-sub">${hasComp ? `vs ${fmt(aggB.importe)} (B)` : labelA}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Unidades · A</div>
+        <div class="kpi-val">${fmtK(aggA.unidades)}</div>
+        ${hasComp ? `<span class="kpi-badge ${difU < 0 ? 'down' : 'up'}">${pctU} vs B</span>` : ''}
+        <div class="kpi-sub">${hasComp ? `vs ${fmtN(aggB.unidades)} uds (B)` : 'unidades'}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Referencias · A</div>
+        <div class="kpi-val">${aggA.refs.size}</div>
+        ${hasComp ? `<div class="kpi-sub">${aggB.refs.size} refs en B</div>` : ''}
+      </div>
+    </div>`;
+
+  // ── Banner comparativo ──────────────────────────────────────────────────
+  const bannerHTML = hasComp ? `
+    <div class="comp-banner ${difI < 0 ? 'down' : difI > 0 ? 'up' : 'neutral'}" style="margin-bottom:14px">
+      <div class="cb-main">
+        <div class="cb-delta ${difI < 0 ? 'down' : 'up'}">${difI >= 0 ? '+' : ''}${fmt(difI)}</div>
+        <div class="cb-sub">${pctI} · ${labelA} vs ${labelB}</div>
+      </div>
+      <div class="cb-col">
+        <div class="cb-col-label">A · ${labelA}</div>
+        <div class="cb-col-val">${fmt(aggA.importe)}</div>
+      </div>
+      <div class="cb-col">
+        <div class="cb-col-label">B · ${labelB}</div>
+        <div class="cb-col-val" style="color:var(--text3)">${fmt(aggB.importe)}</div>
+      </div>
+      <div class="cb-col">
+        <div class="cb-col-label">Uds A</div>
+        <div class="cb-col-val">${fmtN(aggA.unidades)}</div>
+      </div>
+      <div class="cb-col">
+        <div class="cb-col-label">Uds B</div>
+        <div class="cb-col-val" style="color:var(--text3)">${fmtN(aggB.unidades)}</div>
+      </div>
+    </div>` : '';
+
+  // ── Evolución anual (histórico completo, sin filtro de periodo) ──────────
+  let compHTML = '';
+  añosCl.forEach((a, i) => {
+    const v     = sumI(rowsAll.filter(r => r.año === a));
+    const vPrev = i > 0 ? sumI(rowsAll.filter(r => r.año === añosCl[i - 1])) : null;
+    const p     = vPrev ? pct(v, vPrev) : null;
+    const isD   = p && p.startsWith('-');
+    const isHL  = (añoA && a === añoA) || (añoB && a === añoB);
+    compHTML += `<div class="comp-row ${isHL ? 'highlight-row' : ''}">
+      <span style="color:var(--text2)">${a}${añoA && a === añoA ? ' <span style="font-size:10px;color:var(--accent)">[A]</span>' : ''}${añoB && a === añoB ? ' <span style="font-size:10px;color:var(--green)">[B]</span>' : ''}</span>
+      <span style="font-family:var(--mono)">${fmt(v)}</span>
+      ${p ? `<span style="color:${isD ? 'var(--red)' : 'var(--green)'};font-size:11px">${p}</span>` : '<span></span>'}
+    </div>`;
+  });
+
+  // ── Chart: todos los meses del año, tramo resaltado ──────────────────────
+  const allA  = MESES_ORD.map(m => sumI(rowsAll.filter(r => r.año === añoA && r.mes === m)));
+  const allB  = añoB ? MESES_ORD.map(m => sumI(rowsAll.filter(r => r.año === añoB && r.mes === m))) : null;
+  const bgA   = allA.map((_, i) => mesesA.includes(MESES_ORD[i]) ? '#4f7cffcc' : '#4f7cff2a');
+  const bgB   = allB ? allB.map((_, i) => mesesB.includes(MESES_ORD[i]) ? '#34c77bcc' : '#34c77b2a') : null;
+
+  // ── Productos — periodo A vs B ───────────────────────────────────────────
+  const prodsMap = {};
+  rowsA.forEach(r => {
+    if (!prodsMap[r.producto]) prodsMap[r.producto] = { v: 0, u: 0, vB: 0, uB: 0 };
+    prodsMap[r.producto].v += r.importe  || 0;
+    prodsMap[r.producto].u += r.unidades || 0;
+  });
+  if (rowsB) {
+    rowsB.forEach(r => {
+      if (!prodsMap[r.producto]) prodsMap[r.producto] = { v: 0, u: 0, vB: 0, uB: 0 };
+      prodsMap[r.producto].vB += r.importe  || 0;
+      prodsMap[r.producto].uB += r.unidades || 0;
+    });
+  }
+  const topP = Object.entries(prodsMap).map(([k, v]) => ({ k, ...v })).sort((a, b) => b.v - a.v);
+
+  const prodHeader = `<th>#</th><th>Producto</th><th style="text-align:right">Uds A</th><th style="text-align:right">Imp. A</th>`
+    + (hasComp ? `<th style="text-align:right">Uds B</th><th style="text-align:right">Imp. B</th><th style="text-align:right">Var. €</th><th style="text-align:right">Var. %</th>` : '')
+    + `<th style="text-align:right">% total</th>`;
+
+  const prodRows = topP.map((p, i) => {
+    const dv   = hasComp ? p.v - p.vB : null;
+    const dp   = hasComp && p.vB ? pct(p.v, p.vB) : null;
+    const isDP = dp && dp.startsWith('-');
+    return `<tr>
+      <td style="color:var(--text3);font-family:var(--mono)">${i + 1}</td>
+      <td>${p.k}</td>
+      <td class="td-right">${fmtN(p.u)}</td>
+      <td class="td-right">${fmt(p.v)}</td>
+      ${hasComp ? `
+        <td class="td-right" style="color:var(--text3)">${fmtN(p.uB)}</td>
+        <td class="td-right" style="color:var(--text3)">${p.vB ? fmt(p.vB) : '—'}</td>
+        <td class="td-right ${isDP ? 'var-negative' : dv > 0 ? 'var-positive' : ''}">${dv !== null ? (dv >= 0 ? '+' : '') + fmt(dv) : '—'}</td>
+        <td class="td-right ${isDP ? 'var-negative' : dp && !isDP ? 'var-positive' : ''}">${dp || '—'}</td>` : ''}
+      <td class="td-right" style="color:var(--text3)">${aggA.importe ? ((p.v / aggA.importe) * 100).toFixed(1) + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  cont.innerHTML = `
+    ${tramoBanner}
+    ${kpiHTML}
+    ${bannerHTML}
+    <div class="comp-grid">
+      <div class="card">
+        <div class="card-title">Evolución anual (histórico completo)</div>
+        ${compHTML}
+      </div>
+      <div class="card">
+        <div class="card-title">Ventas por mes${hasComp ? ` · <span style="color:var(--accent)">A</span> vs <span style="color:var(--green)">B</span>` : ''}</div>
+        <div style="height:170px"><canvas id="c-cl-mes"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Productos — ${topP.length} referencias${hasComp ? ` · ${labelA} vs ${labelB}` : labelA ? ` · ${labelA}` : ''}</div>
+      <div class="table-wrap">
+        <table><thead><tr>${prodHeader}</tr></thead><tbody>${prodRows}</tbody></table>
+      </div>
+    </div>`;
+
+  // ── Chart ─────────────────────────────────────────────────────────────────
+  setTimeout(() => {
+    destroyChart('c-cl-mes');
+    const datasets = [{ data: allA, backgroundColor: bgA, borderRadius: 4, label: labelA }];
+    if (bgB) datasets.push({ data: allB, backgroundColor: bgB, borderRadius: 4, label: labelB });
+    charts['c-cl-mes'] = new Chart(document.getElementById('c-cl-mes'), {
+      type: 'bar',
+      data: { labels: MESES_C, datasets },
+      options: {
+        ...cDefaults,
+        plugins: {
+          legend: { display: hasComp, labels: { font: { size: 10 }, color: '#8b8fa8', boxWidth: 10 } },
+          tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` } }
+        }
+      }
+    });
+  }, 60);
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SISTEMA DE ALERTAS v3
+// 4 tipos: GONE (desaparecido) | RISK (en riesgo) | REF (referencia) | OPP (oportunidad)
+// Compara siempre: mismo tramo temporal año actual vs año comparativo
+// Pipeline: calcAlertas() → applyAlFilters() → renderAlertas()
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Tipo de alerta activo en el filtro UI */
+let alTypeFilter = 'all';
+
+/** Cambia el filtro de tipo y re-renderiza */
+function setAlType(val, el) {
+  alTypeFilter = val;
+  document.querySelectorAll('.al-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderAlertas();
+}
+
+// ── HELPERS compartidos con el módulo de clientes ─────────────────────────
+
+/**
+ * Devuelve los meses realmente importados en un año concreto,
+ * ordenados según MESES_ORD.
+ */
+function getMesesImportados(año) {
+  const presentes = new Set(DB.filter(r => r.año === año).map(r => r.mes));
+  return MESES_ORD.filter(m => presentes.has(m));
+}
+
+/**
+ * Etiqueta legible de tramo: "Ene–Abr 2026 vs Ene–Abr 2025"
+ */
+function tramoLabel(meses, añoA, añoB) {
+  if (!meses.length) return String(añoA);
+  const first = MESES_C[MESES_ORD.indexOf(meses[0])];
+  const last  = MESES_C[MESES_ORD.indexOf(meses[meses.length - 1])];
+  const rango = first === last ? first : `${first}–${last}`;
+  return `${rango} ${añoA} vs ${rango} ${añoB}`;
+}
+
+/** Suma un campo de DB para un cliente, año y lista de meses */
+function sumaCliente(cliente, año, meses, campo = 'importe') {
+  return DB
+    .filter(r => r.cliente === cliente && r.año === año && meses.includes(r.mes))
+    .reduce((s, r) => s + (r[campo] || 0), 0);
+}
+
+/** Suma unidades de un producto para un cliente, año y lista de meses */
+function sumaProducto(cliente, producto, año, meses) {
+  return DB
+    .filter(r => r.cliente === cliente && r.producto === producto && r.año === año && meses.includes(r.mes))
+    .reduce((s, r) => s + (r.unidades || 0), 0);
+}
+
+// ── CÁLCULO DE ALERTAS ────────────────────────────────────────────────────
+
+/**
+ * Genera todas las alertas brutas sin filtrar.
+ * Tramo: meses realmente importados del año más reciente vs el año anterior.
+ *
+ * @returns {{ gone, risk, ref, opp, tramo, añoA, añoB, meses }}
+ */
+function calcAlertas() {
+  const empty = { gone:[], risk:[], ref:[], opp:[], tramo:'', añoA:null, añoB:null, meses:[] };
+  const años  = getYears();
+  if (años.length < 2) return empty;
+
+  const añoA = Math.max(...años);
+  const añoB = añoA - 1;
+  if (!años.includes(añoB)) return empty;
+
+  // Tramo = meses importados en el año más reciente
+  const meses  = getMesesImportados(añoA);
+  if (!meses.length) return empty;
+
+  const tramo  = tramoLabel(meses, añoA, añoB);
+
+  // Todos los clientes presentes en cualquiera de los dos años
+  const clientesSet = new Set([
+    ...DB.filter(r => r.año === añoA && meses.includes(r.mes)).map(r => r.cliente),
+    ...DB.filter(r => r.año === añoB && meses.includes(r.mes)).map(r => r.cliente)
+  ]);
+
+  const gone = [], risk = [], ref = [], opp = [];
+
+  for (const cliente of clientesSet) {
+    const impA = sumaCliente(cliente, añoA, meses, 'importe');
+    const impB = sumaCliente(cliente, añoB, meses, 'importe');
+    const dif  = impA - impB;   // negativo = bajada
+    const pct  = impB > 0 ? (dif / impB) * 100 : 0;
+
+    // ── TIPO 1: DESAPARECIDO — tenía ventas en B, ninguna en A ───────────
+    if (impB > 0 && impA === 0) {
+      gone.push({ type:'gone', cliente, impA, impB, dif, pct, tramo, añoA, añoB,
+        sortKey: -impB });  // más importante cuanto mayor era su volumen
+      continue;  // no generar otras alertas para este cliente
+    }
+
+    // ── TIPO 2: EN RIESGO — caída > minEuros Y > minPct ──────────────────
+    // (umbrales leídos en applyAlFilters, aquí guardamos raw)
+    if (impB > 0 && dif < 0) {
+      risk.push({ type:'risk', cliente, impA, impB, dif, pct, tramo, añoA, añoB,
+        sortKey: dif });  // más negativo = más grave
+    }
+
+    // ── TIPO 4: OPORTUNIDAD — incremento > 0 ─────────────────────────────
+    if (impB > 0 && dif > 0) {
+      opp.push({ type:'opp', cliente, impA, impB, dif, pct, tramo, añoA, añoB,
+        sortKey: -dif });  // mayor incremento primero
+    }
+
+    // ── TIPO 3: REFERENCIA EN CAÍDA — por producto dentro del cliente ─────
+    const productosSet = new Set([
+      ...DB.filter(r => r.cliente===cliente && r.año===añoA && meses.includes(r.mes)).map(r=>r.producto),
+      ...DB.filter(r => r.cliente===cliente && r.año===añoB && meses.includes(r.mes)).map(r=>r.producto)
+    ]);
+    for (const producto of productosSet) {
+      const udsA  = sumaProducto(cliente, producto, añoA, meses);
+      const udsB  = sumaProducto(cliente, producto, añoB, meses);
+      const difU  = udsA - udsB;
+      if (udsB > 0 && difU < 0) {
+        ref.push({ type:'ref', cliente, producto, udsA, udsB, difU, tramo, añoA, añoB,
+          sortKey: difU });  // más negativo = más grave
+      }
+    }
+  }
+
+  // Ordenar cada grupo por impacto absoluto
+  gone.sort((a,b) => a.sortKey - b.sortKey);
+  risk.sort((a,b) => a.sortKey - b.sortKey);
+  ref.sort((a,b)  => a.sortKey - b.sortKey);
+  opp.sort((a,b)  => a.sortKey - b.sortKey);
+
+  return { gone, risk, ref, opp, tramo, añoA, añoB, meses };
+}
+
+/**
+ * Aplica los umbrales de los controles UI a las alertas brutas.
+ * gone siempre pasa (sin umbral).
+ */
+function applyAlFilters({ gone, risk, ref, opp }) {
+  const minEuros = parseFloat(document.getElementById('al-min-euros')?.value ?? 100);
+  const minPct   = parseFloat(document.getElementById('al-min-pct')?.value   ?? 15);
+  const minUds   = parseFloat(document.getElementById('al-min-uds')?.value   ?? 6);
+  const minOpp   = parseFloat(document.getElementById('al-min-opp')?.value   ?? 100);
+  const cliente  = document.getElementById('al-cliente')?.value ?? '';
+  const type     = alTypeFilter;
+
+  const fCl = arr => cliente ? arr.filter(a => a.cliente === cliente) : arr;
+
+  const fGone = type==='all'||type==='gone' ? fCl(gone) : [];
+  const fRisk = type==='all'||type==='risk'
+    ? fCl(risk).filter(a => Math.abs(a.dif) >= minEuros && Math.abs(a.pct) >= minPct) : [];
+  const fRef  = type==='all'||type==='ref'
+    ? fCl(ref).filter(a => Math.abs(a.difU) >= minUds) : [];
+  const fOpp  = type==='all'||type==='opp'
+    ? fCl(opp).filter(a => a.dif >= minOpp) : [];
+
+  return { fGone, fRisk, fRef, fOpp };
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+
+function renderAlertas() {
+  const cont   = document.getElementById('alertas-view');
+  const filEl  = document.getElementById('al-filters');
+  const badge  = document.getElementById('alert-badge');
+
+  // Without data
+  if (!DB.length) {
+    if (filEl) filEl.style.display = 'none';
+    cont.innerHTML = '<div class="al-empty"><div class="al-empty-icon">◈</div><div class="al-empty-title">Importa datos para ver alertas</div></div>';
+    badge.style.display = 'none';
+    syncAlertBadge();
+    return;
+  }
+
+  const raw = calcAlertas();
+
+  if (!raw.añoA || !raw.meses.length) {
+    if (filEl) filEl.style.display = 'none';
+    cont.innerHTML = '<div class="al-empty"><div class="al-empty-icon">◈</div><div class="al-empty-title">Necesitas datos de al menos 2 años para comparar</div></div>';
+    badge.style.display = 'none';
+    syncAlertBadge();
+    return;
+  }
+
+  // Show filters
+  if (filEl) filEl.style.display = 'flex';
+
+  // Populate client select
+  const clSel = document.getElementById('al-cliente');
+  if (clSel) {
+    const prev = clSel.value;
+    const todos = [...new Set([...raw.gone, ...raw.risk, ...raw.ref, ...raw.opp].map(a => a.cliente))].sort();
+    clSel.innerHTML = '<option value="">Todos los clientes</option>' +
+      todos.map(c => `<option ${c===prev?'selected':''} value="${c}">${c}</option>`).join('');
+  }
+
+  const { fGone, fRisk, fRef, fOpp } = applyAlFilters(raw);
+  const total = fGone.length + fRisk.length + fRef.length + fOpp.length;
+
+  // Nav badge
+  if (total > 0) { badge.textContent = total; badge.style.display = 'inline'; }
+  else           { badge.style.display = 'none'; }
+  syncAlertBadge();
+
+  // ── Summary cards ────────────────────────────────────────────────────────
+  const totalEuro = [...fGone, ...fRisk].reduce((s,a) => s + Math.abs(a.dif||0), 0);
+  const summaryHTML = `
+    <div class="al-summary">
+      <div class="al-sum-card t-gone">
+        <div class="al-sum-label">Desaparecidos</div>
+        <div class="al-sum-val gone">${fGone.length}</div>
+        <div class="al-sum-sub">${fGone.length ? fmt(fGone.reduce((s,a)=>s+a.impB,0))+' perdidos' : 'ninguno'}</div>
+      </div>
+      <div class="al-sum-card t-risk">
+        <div class="al-sum-label">En riesgo</div>
+        <div class="al-sum-val risk">${fRisk.length}</div>
+        <div class="al-sum-sub">${fRisk.length ? '−'+fmt(Math.abs(fRisk.reduce((s,a)=>s+a.dif,0))) : 'ninguno'}</div>
+      </div>
+      <div class="al-sum-card t-ref">
+        <div class="al-sum-label">Referencias</div>
+        <div class="al-sum-val ref">${fRef.length}</div>
+        <div class="al-sum-sub">${fRef.length ? fRef.reduce((s,a)=>s+Math.abs(a.difU),0)+' uds perdidas' : 'ninguna'}</div>
+      </div>
+      <div class="al-sum-card t-opp">
+        <div class="al-sum-label">Oportunidades</div>
+        <div class="al-sum-val opp">${fOpp.length}</div>
+        <div class="al-sum-sub">${fOpp.length ? '+'+fmt(fOpp.reduce((s,a)=>s+a.dif,0)) : 'ninguna'}</div>
+      </div>
+    </div>
+    <div class="al-tramo">📊 <strong>${raw.tramo}</strong></div>`;
+
+  if (!total) {
+    cont.innerHTML = summaryHTML + `
+      <div class="al-empty">
+        <div class="al-empty-icon al-ok-icon">✓</div>
+        <div class="al-empty-title" style="color:var(--green)">Sin alertas con los filtros actuales</div>
+        <div class="al-empty-sub">Prueba a reducir los umbrales mínimos</div>
+      </div>`;
+    return;
+  }
+
+  // ── Card builder ─────────────────────────────────────────────────────────
+  function clientCard(a, cls, icon, badge, detailFn) {
+    const absDif = Math.abs(a.dif);
+    const absPct = Math.abs(a.pct);
+    const pctCls = absPct >= 30 ? 'severe' : absPct >= 15 ? 'moderate' : 'positive';
+    const isDown = a.dif < 0;
+    return `
+      <div class="al-card ${cls}">
+        <div class="al-card-inner">
+          <div class="al-card-icon">${icon}</div>
+          <div class="al-card-body">
+            <div class="al-card-top">
+              <span class="al-type-badge ${cls}">${badge}</span>
+              <span class="al-client-name">${a.cliente}</span>
+            </div>
+            <div class="al-detail">${detailFn(a)}</div>
+            <div class="al-tramo-tag">${a.tramo}</div>
+          </div>
+          <div class="al-card-metrics">
+            <div class="al-metric">
+              <div class="al-metric-val ${isDown?'neg':'pos'}">${isDown?'−':'+'}${fmt(absDif)}</div>
+              <div class="al-metric-label">diferencia</div>
+            </div>
+            <div class="al-metric">
+              <div class="al-metric-val muted">${fmt(a.impA)}</div>
+              <div class="al-metric-label">${a.añoA}</div>
+            </div>
+            <div class="al-metric">
+              <div class="al-metric-val" style="color:var(--text3);font-size:13px">${fmt(a.impB)}</div>
+              <div class="al-metric-label">${a.añoB}</div>
+            </div>
+            ${a.pct !== 0 ? `<span class="al-pct ${pctCls}">${isDown?'':'+'}${a.pct.toFixed(1)}%</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function refCard(a) {
+    return `
+      <div class="al-card ref">
+        <div class="al-card-inner">
+          <div class="al-card-icon">◎</div>
+          <div class="al-card-body">
+            <div class="al-card-top">
+              <span class="al-type-badge ref">Referencia</span>
+              <span class="al-client-name">${a.cliente}</span>
+            </div>
+            <div class="al-detail">Ha reducido <strong style="color:var(--orange)">${Math.abs(a.difU)} uds</strong> de <em style="color:var(--text)">${a.producto}</em></div>
+            <div class="al-tramo-tag">${a.tramo}</div>
+          </div>
+          <div class="al-card-metrics">
+            <div class="al-metric">
+              <div class="al-metric-val neg-mild">−${Math.abs(a.difU)} uds</div>
+              <div class="al-metric-label">diferencia</div>
+            </div>
+            <div class="al-metric">
+              <div class="al-metric-val muted">${fmtN(a.udsA)}</div>
+              <div class="al-metric-label">${a.añoA}</div>
+            </div>
+            <div class="al-metric">
+              <div class="al-metric-val" style="color:var(--text3);font-size:13px">${fmtN(a.udsB)}</div>
+              <div class="al-metric-label">${a.añoB}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── Sections ─────────────────────────────────────────────────────────────
+  const sGone = fGone.length ? `
+    <div class="al-section-label">✕ Clientes desaparecidos (${fGone.length})</div>
+    ${fGone.map(a => clientCard(a,'gone','✕','Desaparecido',
+        a => `Tenía <strong style="color:var(--text)">${fmt(a.impB)}</strong> en ${a.añoB} — sin ventas en ${a.añoA}`
+      )).join('')}` : '';
+
+  const sRisk = fRisk.length ? `
+    <div class="al-section-label">↓ Clientes en riesgo (${fRisk.length})</div>
+    ${fRisk.map(a => clientCard(a,'risk','↓','En riesgo',
+        a => `Ha bajado <strong style="color:var(--red)">${fmt(Math.abs(a.dif))}</strong> respecto a ${a.añoB}`
+      )).join('')}` : '';
+
+  const sRef = fRef.length ? `
+    <div class="al-section-label">◎ Referencias en caída (${fRef.length})</div>
+    ${fRef.map(a => refCard(a)).join('')}` : '';
+
+  const sOpp = fOpp.length ? `
+    <div class="al-section-label">↑ Oportunidades (${fOpp.length})</div>
+    ${fOpp.map(a => clientCard(a,'opp','↑','Oportunidad',
+        a => `Ha crecido <strong style="color:var(--green)">${fmt(a.dif)}</strong> respecto a ${a.añoB}`
+      )).join('')}` : '';
+
+  cont.innerHTML = summaryHTML + sGone + sRisk + sRef + sOpp;
+}
+
+
+// ── TABLA ──────────────────────────────────────────────────────────────────
+function renderTabla(){
+  const años=getYears(),clientes=[...new Set(DB.map(r=>r.cliente))].sort();
+  const meses=[...new Set(DB.map(r=>r.mes))].sort((a,b)=>MESES_ORD.indexOf(a)-MESES_ORD.indexOf(b));
+  ['datos-año','datos-mes','datos-cliente'].forEach((id,i)=>{
+    const el=document.getElementById(id),prev=el.value;
+    const opts=i===0?años:i===1?meses:clientes;
+    el.innerHTML=`<option value="">${['Todos los años','Todos los meses','Todos los clientes'][i]}</option>`+opts.map(o=>`<option ${o==prev?'selected':''} value="${o}">${o}</option>`).join('');
+  });
+  let rows=DB;
+  const año=parseInt(document.getElementById('datos-año').value)||null;
+  const mes=document.getElementById('datos-mes').value;
+  const cliente=document.getElementById('datos-cliente').value;
+  if(año) rows=rows.filter(r=>r.año===año);
+  if(mes) rows=rows.filter(r=>r.mes===mes);
+  if(cliente) rows=rows.filter(r=>r.cliente===cliente);
+  const shown=rows.slice(0,500);
+  document.getElementById('tabla-body').innerHTML=shown.map(r=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${r.año}</td>
+    <td style="text-transform:capitalize">${r.mes}</td><td>${r.cliente}</td>
+    <td style="color:var(--text2);font-size:11.5px">${r.producto}</td>
+    <td class="td-right">${fmtN(r.unidades)}</td><td class="td-right">${fmt(r.importe)}</td>
+  </tr>`).join('')+(rows.length>500?`<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:12px">Mostrando 500 de ${rows.length}</td></tr>`:'');
+}
+
+function exportCSV(){
+  if(!DB.length)return;
+  const cols=['año','mes','cliente','producto','unidades','importe'];
+  const csv=[cols.join(';'),...DB.map(r=>cols.map(c=>r[c]).join(';'))].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download=`ventas_${currentUser?.name||'export'}.csv`;a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PREPARACIÓN DE VISITA COMERCIAL
+// Arquitectura: initVisitaPanel → [dropdown] → renderVisita()
+//   calcReposicion | calcRotura | calcTop10 | calcTop20
+//   calcPerdidasRef | calcCrosselling | buildPlanVisita | buildResumenEjecutivo
+// ═══════════════════════════════════════════════════════════════════════════
+
+let visitaCliente = '';   // cliente seleccionado en este panel
+let vcsFocusIdx   = -1;
+
+// ── Dropdown propio para visita (no comparte estado con clientes) ────────────
+function initVisitaPanel() {
+  if (!DB.length) {
+    document.getElementById('visita-view').innerHTML =
+      '<div class="empty"><div class="empty-icon">⊕</div><div class="empty-title">Importa datos primero</div></div>';
+    return;
+  }
+  setTimeout(() => document.getElementById('vcs-input')?.focus(), 80);
+}
+
+function openVisitaDropdown() {
+  if (!DB.length) return;
+  const wrap = document.getElementById('vcs-wrap');
+  const drop = document.getElementById('vcs-dropdown');
+  wrap.classList.add('open'); drop.style.display = 'block';
+  filterVisitaClients(); vcsFocusIdx = -1;
+}
+function closeVisitaDropdown() {
+  document.getElementById('vcs-wrap').classList.remove('open');
+  document.getElementById('vcs-dropdown').style.display = 'none';
+}
+function filterVisitaClients() {
+  const q    = (document.getElementById('vcs-input').value || '').trim().toLowerCase();
+  const list = document.getElementById('vcs-list');
+  const clrBtn = document.getElementById('vcs-clear');
+  clrBtn.style.display = q ? 'block' : 'none';
+  const all = buildClientIndex();
+  const res = q ? all.filter(c => c.name.toLowerCase().includes(q)) : all;
+  vcsFocusIdx = -1;
+  if (!res.length) { list.innerHTML = '<div class="cs-no-results">Sin coincidencias</div>'; return; }
+  list.innerHTML = res.map((c, i) => `
+    <div class="cs-option${c.name === visitaCliente ? ' selected' : ''}" data-idx="${i}" data-name="${c.name.replace(/"/g,'&quot;')}"
+      onmousedown="selectVisitaClient('${c.name.replace(/'/g,"\\'")}')">
+      <div class="cs-opt-left">
+        <div class="cs-opt-name">${highlightMatch(c.name, q)}</div>
+      </div>
+      <div class="cs-opt-right">
+        <div class="cs-opt-revenue">${fmtK(c.revenue)} €</div>
+        <div class="cs-opt-year">hasta ${c.lastYear}</div>
+      </div>
+    </div>`).join('');
+}
+function selectVisitaClient(name) {
+  visitaCliente = name;
+  document.getElementById('vcs-input').value = '';
+  document.getElementById('vcs-clear').style.display = 'none';
+  document.getElementById('btn-gen-visita').style.display = 'inline-flex';
+  closeVisitaDropdown();
+  // Show selected chip in button area
+  document.getElementById('btn-gen-visita').textContent = `⊕ Generar informe — ${name.split(' ')[0]}`;
+  renderVisita();
+}
+function clearVisitaClient(e) {
+  if (e) e.stopPropagation();
+  visitaCliente = '';
+  document.getElementById('vcs-input').value = '';
+  document.getElementById('vcs-clear').style.display = 'none';
+  document.getElementById('btn-gen-visita').style.display = 'none';
+  closeVisitaDropdown();
+  document.getElementById('visita-view').innerHTML =
+    '<div class="empty"><div class="empty-icon">⊕</div><div class="empty-title">Preparación de visita comercial</div><div class="empty-sub">Selecciona un cliente para generar el informe</div></div>';
+}
+function vcsKeyNav(e) {
+  const items = document.querySelectorAll('#vcs-list .cs-option');
+  if (!items.length) { if (e.key === 'Escape') closeVisitaDropdown(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); vcsFocusIdx = Math.min(vcsFocusIdx+1, items.length-1); _applyVcsFocus(items); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); vcsFocusIdx = Math.max(vcsFocusIdx-1, 0); _applyVcsFocus(items); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (vcsFocusIdx >= 0 && items[vcsFocusIdx]) selectVisitaClient(items[vcsFocusIdx].dataset.name); else if (items.length===1) selectVisitaClient(items[0].dataset.name); }
+  else if (e.key === 'Escape') { closeVisitaDropdown(); document.getElementById('vcs-input').blur(); }
+}
+function _applyVcsFocus(items) {
+  items.forEach((el, i) => el.classList.toggle('focused', i === vcsFocusIdx));
+  if (items[vcsFocusIdx]) items[vcsFocusIdx].scrollIntoView({ block: 'nearest' });
+}
+document.addEventListener('mousedown', e => {
+  const wrap = document.getElementById('vcs-wrap');
+  if (wrap && !wrap.contains(e.target)) closeVisitaDropdown();
+});
+
+// ── HELPERS DE VISITA ────────────────────────────────────────────────────────
+
+/** Fecha más reciente de compra de un producto para un cliente */
+function lastBuyDate(clienteRows, producto) {
+  const rows = clienteRows.filter(r => r.producto === producto);
+  if (!rows.length) return null;
+  // Aproximar fecha por año+mes
+  let best = null;
+  rows.forEach(r => {
+    const mi = MESES_ORD.indexOf(r.mes);
+    const ts = r.año * 12 + mi;
+    if (best === null || ts > best.ts) best = { ts, label: `${MESES_C[mi]} ${r.año}`, año: r.año, mes: r.mes };
+  });
+  return best;
+}
+
+/** Meses transcurridos desde último registro hasta hoy (usa el año/mes más reciente en DB) */
+function mesesDesde(año, mes) {
+  const maxAño = Math.max(...DB.map(r => r.año));
+  const maxMes = Math.max(...DB.filter(r => r.año === maxAño).map(r => MESES_ORD.indexOf(r.mes)));
+  const horaA  = maxAño * 12 + maxMes;
+  const horaB  = año   * 12 + MESES_ORD.indexOf(mes);
+  return Math.max(0, horaA - horaB);
+}
+
+/** Top N productos globales por importe */
+function topProductosGlobal(n = 20) {
+  const map = {};
+  DB.forEach(r => { map[r.producto] = (map[r.producto] || 0) + (r.importe || 0); });
+  return Object.entries(map).map(([k, v]) => ({ producto: k, importe: v }))
+    .sort((a, b) => b.importe - a.importe).slice(0, n);
+}
+
+/** Filas de los últimos 12 meses para un cliente */
+function rowsUltimos12(clienteRows) {
+  const maxAño = Math.max(...DB.map(r => r.año));
+  const maxMesIdx = Math.max(...DB.filter(r => r.año === maxAño).map(r => MESES_ORD.indexOf(r.mes)));
+  const limite = maxAño * 12 + maxMesIdx - 11;
+  return clienteRows.filter(r => r.año * 12 + MESES_ORD.indexOf(r.mes) >= limite);
+}
+
+// ── MÓDULOS DE CÁLCULO ────────────────────────────────────────────────────────
+
+/**
+ * Reposición recomendada: consumo mensual medio × meses sin comprar.
+ */
+function calcReposicion(clienteRows, rows12) {
+  const prodMap = {};
+  // Consumo en últimos 12 meses
+  rows12.forEach(r => {
+    if (!prodMap[r.producto]) prodMap[r.producto] = { uds12: 0, imp12: 0 };
+    prodMap[r.producto].uds12 += r.unidades || 0;
+    prodMap[r.producto].imp12 += r.importe  || 0;
+  });
+  const result = [];
+  Object.entries(prodMap).forEach(([prod, data]) => {
+    const consumoMensual = data.uds12 / 12;
+    if (consumoMensual < 0.1) return;
+    const last = lastBuyDate(clienteRows, prod);
+    if (!last) return;
+    const meses = mesesDesde(last.año, last.mes);
+    if (meses < 1) return;
+    const cantRec = Math.round(consumoMensual * meses);
+    if (cantRec < 1) return;
+    const ratio = meses / (12 / (data.uds12 / consumoMensual || 1));
+    const prioridad = meses >= 2 ? 'red' : meses >= 1 ? 'orange' : 'green';
+    const priLabel  = meses >= 2 ? '🔴 Alta' : meses >= 1 ? '🟡 Media' : '🟢 Baja';
+    result.push({ prod, uds12: data.uds12, imp12: data.imp12, consumoMensual, meses, cantRec, prioridad, priLabel, last });
+  });
+  return result.sort((a, b) => {
+    const priOrder = { red: 0, orange: 1, green: 2 };
+    return (priOrder[a.prioridad] - priOrder[b.prioridad]) || b.imp12 - a.imp12;
+  });
+}
+
+/**
+ * Riesgo de rotura: productos con frecuencia histórica conocida y tiempo excedido.
+ */
+function calcRotura(clienteRows) {
+  // Agrupar compras por producto y calcular intervalo medio entre compras
+  const prodCompras = {};
+  clienteRows.forEach(r => {
+    if (!prodCompras[r.producto]) prodCompras[r.producto] = [];
+    prodCompras[r.producto].push(r.año * 12 + MESES_ORD.indexOf(r.mes));
+  });
+  const result = [];
+  Object.entries(prodCompras).forEach(([prod, stamps]) => {
+    const uniq = [...new Set(stamps)].sort((a,b)=>a-b);
+    if (uniq.length < 2) return;
+    const intervals = [];
+    for (let i = 1; i < uniq.length; i++) intervals.push(uniq[i] - uniq[i-1]);
+    const avgInterval = intervals.reduce((s,v)=>s+v,0) / intervals.length;
+    const last = lastBuyDate(clienteRows, prod);
+    if (!last) return;
+    const elapsed = mesesDesde(last.año, last.mes);
+    const ratio   = elapsed / avgInterval;
+    if (ratio < 0.8) return; // aún dentro del ciclo normal
+    const riesgo  = ratio >= 1.5 ? 'red' : ratio >= 1.0 ? 'orange' : 'green';
+    const riesgoLabel = ratio >= 1.5 ? '🔴 Muy alto' : ratio >= 1.0 ? '🟡 Alto' : '🟢 Moderado';
+    const cantSug = Math.round(clienteRows.filter(r=>r.producto===prod).reduce((s,r)=>s+(r.unidades||0),0) / uniq.length);
+    result.push({ prod, elapsed, avgInterval: avgInterval.toFixed(1), ratio: ratio.toFixed(2), riesgo, riesgoLabel, cantSug, last });
+  });
+  return result.sort((a,b) => parseFloat(b.ratio) - parseFloat(a.ratio)).slice(0, 15);
+}
+
+/**
+ * Top 10 y Top 20 globales que el cliente no ha comprado nunca.
+ */
+function calcTopOportunidades(clienteRows) {
+  const comprados = new Set(clienteRows.map(r => r.producto));
+  const top20 = topProductosGlobal(20);
+  const top10missing = top20.slice(0, 10).filter((p, i) => !comprados.has(p.producto)).map((p, i) => ({ ...p, rank: top20.indexOf(p) + 1 }));
+  const top20missing = top20.slice(10, 20).filter(p => !comprados.has(p.producto)).map(p => ({ ...p, rank: top20.indexOf(p) + 1 }));
+  return { top10missing, top20missing };
+}
+
+/**
+ * Referencias perdidas: productos comprados antes pero sin compras en 12/18/24 meses.
+ */
+function calcPerdidasRef(clienteRows) {
+  const maxAño = Math.max(...DB.map(r => r.año));
+  const maxMesIdx = Math.max(...DB.filter(r => r.año === maxAño).map(r => MESES_ORD.indexOf(r.mes)));
+  const ahora = maxAño * 12 + maxMesIdx;
+
+  const prodMap = {};
+  clienteRows.forEach(r => {
+    if (!prodMap[r.producto]) prodMap[r.producto] = { uds: 0, imp: 0, stamps: [] };
+    prodMap[r.producto].uds += r.unidades || 0;
+    prodMap[r.producto].imp += r.importe  || 0;
+    prodMap[r.producto].stamps.push(r.año * 12 + MESES_ORD.indexOf(r.mes));
+  });
+  const result = [];
+  Object.entries(prodMap).forEach(([prod, data]) => {
+    const lastStamp = Math.max(...data.stamps);
+    const elapsed = ahora - lastStamp;
+    if (elapsed < 12) return; // aún activo
+    const periodo = elapsed >= 24 ? '> 24 meses' : elapsed >= 18 ? '> 18 meses' : '> 12 meses';
+    const priLabel = elapsed >= 24 ? '🔴 Crítico' : elapsed >= 18 ? '🟡 Importante' : '🟢 A revisar';
+    const prioridad = elapsed >= 24 ? 'red' : elapsed >= 18 ? 'orange' : 'green';
+    const lastAño  = Math.floor(lastStamp / 12);
+    const lastMesI = lastStamp % 12;
+    result.push({ prod, elapsed, periodo, priLabel, prioridad, uds: data.uds, imp: data.imp, lastLabel: `${MESES_C[lastMesI]} ${lastAño}` });
+  });
+  return result.sort((a, b) => b.elapsed - a.elapsed || b.imp - a.imp);
+}
+
+/**
+ * Venta cruzada inteligente: clientes con facturación similar (±40%) que compran productos que este cliente no compra.
+ */
+function calcCrossSelling(clienteRows) {
+  const comprados = new Set(clienteRows.map(r => r.producto));
+  const miTotal   = sumI(clienteRows);
+  const margen    = 0.4;
+
+  // Clientes con volumen similar
+  const porCliente = groupBy(DB, 'cliente');
+  const similares  = Object.entries(porCliente)
+    .map(([cl, rows]) => ({ cl, total: sumI(rows) }))
+    .filter(c => c.cl !== visitaCliente &&
+      c.total >= miTotal * (1 - margen) &&
+      c.total <= miTotal * (1 + margen))
+    .map(c => c.cl);
+
+  if (!similares.length) return [];
+
+  // Productos de clientes similares no comprados por este cliente
+  const candidatos = {};
+  similares.forEach(cl => {
+    const clRows = porCliente[cl] || [];
+    const clProds = new Set(clRows.map(r => r.producto));
+    clProds.forEach(prod => {
+      if (comprados.has(prod)) return;
+      if (!candidatos[prod]) candidatos[prod] = { cnt: 0, imp: 0 };
+      candidatos[prod].cnt++;
+      candidatos[prod].imp += sumI(DB.filter(r => r.cliente === cl && r.producto === prod));
+    });
+  });
+
+  return Object.entries(candidatos)
+    .map(([prod, d]) => ({
+      prod,
+      pctClientes: Math.round(d.cnt / similares.length * 100),
+      impMedioSimilar: d.imp / d.cnt,
+      similaresCnt: similares.length
+    }))
+    .filter(d => d.pctClientes >= 20)
+    .sort((a, b) => b.pctClientes - a.pctClientes)
+    .slice(0, 12);
+}
+
+// ── RENDER HELPERS ────────────────────────────────────────────────────────────
+
+function vsecHTML(id, icon, title, count, colorClass, bodyHTML) {
+  const cntBadge = count > 0
+    ? `<span class="vsec-count" style="background:rgba(${colorClass},0.12);color:rgb(${colorClass})">${count}</span>`
+    : `<span class="vsec-count">0</span>`;
+  return `
+    <div class="visita-section">
+      <div class="visita-section-header" onclick="toggleVsec('${id}')">
+        <span class="vsec-icon">${icon}</span>
+        <span class="vsec-title">${title}</span>
+        ${cntBadge}
+        <span class="vsec-toggle open" id="vtog-${id}">▾</span>
+      </div>
+      <div class="visita-section-body" id="vsec-${id}">
+        ${count === 0
+          ? '<div style="padding:18px 16px;font-size:12px;color:var(--text3);text-align:center">Sin elementos detectados</div>'
+          : bodyHTML}
+      </div>
+    </div>`;
+}
+
+function toggleVsec(id) {
+  const body = document.getElementById('vsec-' + id);
+  const tog  = document.getElementById('vtog-' + id);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  tog.classList.toggle('open', !open);
+}
+
+// ── RENDER PRINCIPAL ──────────────────────────────────────────────────────────
+function renderVisita() {
+  if (!visitaCliente) return;
+  const cont = document.getElementById('visita-view');
+  cont.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3)"><span class="loader"></span> Analizando cliente…</div>';
+
+  // Async para no bloquear el render del loader
+  setTimeout(() => {
+    const clienteRows = DB.filter(r => r.cliente === visitaCliente);
+    if (!clienteRows.length) {
+      cont.innerHTML = '<div class="empty"><div class="empty-icon">⊕</div><div class="empty-title">Sin datos para este cliente</div></div>';
+      return;
+    }
+
+    const rows12    = rowsUltimos12(clienteRows);
+    const imp12     = sumI(rows12);
+    const impTotal  = sumI(clienteRows);
+    const refs12    = new Set(rows12.map(r => r.producto)).size;
+    const refsTotal = new Set(clienteRows.map(r => r.producto)).size;
+    const lastBuy   = (() => {
+      let best = null;
+      clienteRows.forEach(r => {
+        const ts = r.año * 12 + MESES_ORD.indexOf(r.mes);
+        if (!best || ts > best.ts) best = { ts, label: `${MESES_C[MESES_ORD.indexOf(r.mes)]} ${r.año}` };
+      });
+      return best?.label || '—';
+    })();
+
+    // Calcular todos los módulos
+    const reposicion  = calcReposicion(clienteRows, rows12);
+    const roturas     = calcRotura(clienteRows);
+    const { top10missing, top20missing } = calcTopOportunidades(clienteRows);
+    const perdidas    = calcPerdidasRef(clienteRows);
+    const crossSell   = calcCrossSelling(clienteRows);
+
+    // Potenciales estimados
+    const potReposicion = reposicion.reduce((s, r) => s + r.imp12 / 12 * r.meses, 0);
+    const potTop10      = top10missing.reduce((s, p) => s + p.importe * 0.02, 0); // 2% del global como proxy
+    const potTop20      = top20missing.reduce((s, p) => s + p.importe * 0.015, 0);
+    const potPerdidas   = perdidas.reduce((s, p) => s + p.imp * 0.3, 0); // 30% recuperación
+    const potCross      = crossSell.reduce((s, c) => s + c.impMedioSimilar * 0.5, 0);
+    const potTotal      = potReposicion + potTop10 + potTop20 + potPerdidas + potCross;
+
+    // ── Resumen del cliente ────────────────────────────────────────────────
+    const resumenHTML = `
+      <div class="visita-resumen">
+        <div class="vr-kpi"><div class="vr-kpi-label">Facturación 12m</div><div class="vr-kpi-val">${fmtK(imp12)} €</div><div class="vr-kpi-sub">Total: ${fmtK(impTotal)} €</div></div>
+        <div class="vr-kpi"><div class="vr-kpi-label">Refs activas (12m)</div><div class="vr-kpi-val">${refs12}</div><div class="vr-kpi-sub">Históricas: ${refsTotal}</div></div>
+        <div class="vr-kpi"><div class="vr-kpi-label">Última compra</div><div class="vr-kpi-val" style="font-size:15px">${lastBuy}</div></div>
+        <div class="vr-kpi" style="border-color:rgba(79,124,255,.3);background:rgba(79,124,255,.05)"><div class="vr-kpi-label">Potencial visita</div><div class="vr-kpi-val" style="color:var(--accent)">+${fmtK(potTotal)} €</div><div class="vr-kpi-sub">estimado</div></div>
+      </div>`;
+
+    // ── Reposición ─────────────────────────────────────────────────────────
+    const reposHTML = `<table class="visita-table">
+      <thead><tr><th>Referencia</th><th>Venta 12m</th><th>Últ. compra</th><th>Meses</th><th class="vtd-r">Uds rec.</th><th>Prioridad</th></tr></thead>
+      <tbody>${reposicion.slice(0, 20).map(r => `<tr>
+        <td>${r.prod}</td>
+        <td class="vtd-r">${fmt(r.imp12)}</td>
+        <td>${r.last.label}</td>
+        <td class="vtd-c">${r.meses}</td>
+        <td class="vtd-r" style="font-weight:600">${r.cantRec}</td>
+        <td><span class="pri-badge ${r.prioridad}">${r.priLabel}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // ── Rotura ─────────────────────────────────────────────────────────────
+    const roturaHTML = `<table class="visita-table">
+      <thead><tr><th>Referencia</th><th>Últ. compra</th><th class="vtd-c">Meses</th><th class="vtd-c">Ciclo medio</th><th>Riesgo</th><th class="vtd-r">Uds sugeridas</th></tr></thead>
+      <tbody>${roturas.map(r => `<tr>
+        <td>${r.prod}</td>
+        <td>${r.last.label}</td>
+        <td class="vtd-c">${r.elapsed}</td>
+        <td class="vtd-c" style="color:var(--text3)">${r.avgInterval}m</td>
+        <td><span class="pri-badge ${r.riesgo}">${r.riesgoLabel}</span></td>
+        <td class="vtd-r">${r.cantSug}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // ── Top 10 ─────────────────────────────────────────────────────────────
+    const top10HTML = `<table class="visita-table">
+      <thead><tr><th class="vtd-c">#</th><th>Referencia</th><th class="vtd-r">Ventas globales</th><th>Prioridad</th></tr></thead>
+      <tbody>${top10missing.map(p => `<tr>
+        <td class="vtd-c" style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent)">${p.rank}</td>
+        <td>${p.producto}</td>
+        <td class="vtd-r">${fmt(p.importe)}</td>
+        <td><span class="pri-badge red">🔴 Alta</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // ── Top 20 ─────────────────────────────────────────────────────────────
+    const top20HTML = `<table class="visita-table">
+      <thead><tr><th class="vtd-c">#</th><th>Referencia</th><th class="vtd-r">Ventas globales</th><th>Prioridad</th></tr></thead>
+      <tbody>${top20missing.map(p => `<tr>
+        <td class="vtd-c" style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--orange)">${p.rank}</td>
+        <td>${p.producto}</td>
+        <td class="vtd-r">${fmt(p.importe)}</td>
+        <td><span class="pri-badge orange">🟡 Media</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // ── Perdidas ───────────────────────────────────────────────────────────
+    const perdidasHTML = `<table class="visita-table">
+      <thead><tr><th>Referencia</th><th>Última compra</th><th>Sin actividad</th><th class="vtd-r">Uds hist.</th><th class="vtd-r">Imp. hist.</th><th>Prioridad</th></tr></thead>
+      <tbody>${perdidas.slice(0, 15).map(p => `<tr>
+        <td>${p.prod}</td>
+        <td>${p.lastLabel}</td>
+        <td style="color:var(--text3)">${p.periodo}</td>
+        <td class="vtd-r">${fmtN(p.uds)}</td>
+        <td class="vtd-r">${fmt(p.imp)}</td>
+        <td><span class="pri-badge ${p.prioridad}">${p.priLabel}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // ── Cross-selling ──────────────────────────────────────────────────────
+    const crossHTML = `<table class="visita-table">
+      <thead><tr><th>Referencia</th><th class="vtd-c">% clientes similares</th><th class="vtd-r">Importe medio/cliente</th></tr></thead>
+      <tbody>${crossSell.map(c => `<tr>
+        <td>${c.prod}</td>
+        <td class="vtd-c">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+            <div style="width:60px;height:5px;background:var(--bg3);border-radius:3px">
+              <div style="width:${c.pctClientes}%;height:5px;background:var(--accent);border-radius:3px"></div>
+            </div>
+            <span style="font-family:var(--mono);font-size:11px">${c.pctClientes}%</span>
+          </div>
+        </td>
+        <td class="vtd-r">${fmt(c.impMedioSimilar)}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // ── Plan de visita ─────────────────────────────────────────────────────
+    const planItems = [
+      { title: 'Reponer referencias críticas', desc: `${reposicion.filter(r=>r.prioridad==='red').length} productos con reposición urgente detectada`, amount: `+${fmtK(potReposicion)} € estimados` },
+      { title: 'Revisar productos con riesgo de rotura', desc: `${roturas.filter(r=>r.riesgo==='red').length} referencias en riesgo muy alto`, amount: '' },
+      { title: 'Presentar oportunidades Top 10', desc: `${top10missing.length} referencias líderes que el cliente no compra`, amount: `+${fmtK(potTop10)} € potencial` },
+      { title: 'Presentar oportunidades Top 20', desc: `${top20missing.length} referencias de segunda línea sin explorar`, amount: `+${fmtK(potTop20)} € potencial` },
+      { title: 'Recuperar referencias perdidas', desc: `${perdidas.length} productos sin actividad en más de 12 meses`, amount: `+${fmtK(potPerdidas)} € potencial` },
+      { title: 'Proponer venta cruzada', desc: `${crossSell.length} referencias de clientes similares con alta probabilidad`, amount: `+${fmtK(potCross)} € potencial` },
+    ].filter((_, i) => {
+      const counts = [reposicion.length, roturas.length, top10missing.length, top20missing.length, perdidas.length, crossSell.length];
+      return counts[i] > 0;
+    });
+
+    const planHTML = `<div>${planItems.map((item, i) => `
+      <div class="plan-item">
+        <div class="plan-num">${i + 1}</div>
+        <div class="plan-text">
+          <div class="plan-title">${item.title}</div>
+          <div class="plan-desc">${item.desc}</div>
+          ${item.amount ? `<div class="plan-amount">${item.amount}</div>` : ''}
+        </div>
+      </div>`).join('')}</div>`;
+
+    // ── Resumen ejecutivo ──────────────────────────────────────────────────
+    // Top 3 acciones por potencial económico
+    const oportunidades = [
+      { label: 'Reposición', val: potReposicion },
+      { label: 'Top 10',     val: potTop10 },
+      { label: 'Top 20',     val: potTop20 },
+      { label: 'Recuperación refs', val: potPerdidas },
+      { label: 'Venta cruzada', val: potCross },
+    ].filter(o => o.val > 0).sort((a, b) => b.val - a.val);
+
+    const top3Actions = oportunidades.slice(0, 3);
+
+    const ejecutivoHTML = `
+      <div class="exec-box">
+        <div class="vr-kpi-label">Potencial total detectado en la visita</div>
+        <div class="exec-total">+${fmtK(potTotal)} €</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0 0">
+          ${oportunidades.map(o => `<div style="background:var(--bg3);border-radius:6px;padding:8px 10px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${o.label}</div>
+            <div style="font-size:14px;font-weight:600;font-family:var(--mono);color:var(--accent)">+${fmtK(o.val)} €</div>
+          </div>`).join('')}
+        </div>
+        <div class="exec-sub">Las 3 acciones prioritarias para esta visita:</div>
+        <div class="exec-actions">
+          ${top3Actions.map(a => `<div class="exec-action"><strong>${a.label}</strong> — potencial +${fmtK(a.val)} €</div>`).join('')}
+        </div>
+      </div>`;
+
+    // ── Montar todo ────────────────────────────────────────────────────────
+    cont.innerHTML = `
+      <div style="margin-bottom:6px;font-size:13px;font-weight:500;color:var(--text2)">
+        Informe de visita · <span style="color:var(--text)">${visitaCliente}</span>
+      </div>
+      ${resumenHTML}
+      ${ejecutivoHTML}
+      ${vsecHTML('repos',  '🔄', 'Reposición recomendada',         reposicion.length,    '240,79,90',   reposHTML)}
+      ${vsecHTML('rotura', '⚠',  'Productos con riesgo de rotura', roturas.length,       '245,166,35',  roturaHTML)}
+      ${vsecHTML('top10',  '⭐', 'Oportunidades Top 10',           top10missing.length,  '240,79,90',   top10HTML)}
+      ${vsecHTML('top20',  '◎',  'Oportunidades Top 20',           top20missing.length,  '245,166,35',  top20HTML)}
+      ${vsecHTML('perd',   '↩',  'Referencias perdidas',           perdidas.length,      '245,166,35',  perdidasHTML)}
+      ${vsecHTML('cross',  '⇄',  'Venta cruzada inteligente',      crossSell.length,     '79,124,255',  crossHTML)}
+      ${vsecHTML('plan',   '✓',  'Plan de visita recomendado',     planItems.length,     '52,199,123',  planHTML)}`;
+
+  }, 50); // end setTimeout
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MÓDULO INFORMES — PDF de cliente + Dashboard Excel
+// Funciones públicas: initInformesPanel · generateClientPDF · generateDashboardExcel
+//                     buildClientReport  · buildDashboardReport · previewClientReport
+// ═══════════════════════════════════════════════════════════════════════════
+
+function switchInfTab(tab, el) {
+  document.querySelectorAll('.inf-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.inf-panel').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('inf-panel-' + tab).classList.add('active');
+  if (tab === 'excel') updateExcelPreview();
+}
+
+function initInformesPanel() {
+  if (!DB.length) return;
+  const clientes = [...new Set(DB.map(r => r.cliente))].sort();
+  const años     = getYears();
+
+  const pdfCl = document.getElementById('inf-pdf-cliente');
+  pdfCl.innerHTML = '<option value="">— selecciona cliente —</option>' +
+    clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+  pdfCl.onchange = updatePdfPreview;
+
+  ['inf-pdf-m0','inf-pdf-m1'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.innerHTML = MESES_ORD.map((m,j) =>
+      `<option value="${m}"${(i===0&&j===0)||(i===1&&j===11)?'selected':''}>${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
+    el.onchange = updatePdfPreview;
+  });
+  ['inf-pdf-y0','inf-pdf-y1'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = años.map(a =>
+      `<option value="${a}"${a===años[años.length-1]?'selected':''}>${a}</option>`).join('');
+    el.onchange = updatePdfPreview;
+  });
+
+  ['inf-xl-m0','inf-xl-m1'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.innerHTML = MESES_ORD.map((m,j) =>
+      `<option value="${m}"${(i===0&&j===0)||(i===1&&j===11)?'selected':''}>${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
+    el.onchange = updateExcelPreview;
+  });
+  ['inf-xl-y0','inf-xl-y1'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = años.map(a =>
+      `<option value="${a}"${a===años[años.length-1]?'selected':''}>${a}</option>`).join('');
+    el.onchange = updateExcelPreview;
+  });
+  const xlCl = document.getElementById('inf-xl-cliente');
+  xlCl.innerHTML = '<option value="">Todos los clientes</option>' +
+    clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+  xlCl.onchange = updateExcelPreview;
+  updateExcelPreview();
+}
+
+function getPdfFilters() {
+  return {
+    cliente: document.getElementById('inf-pdf-cliente').value,
+    m0: document.getElementById('inf-pdf-m0').value,
+    y0: parseInt(document.getElementById('inf-pdf-y0').value),
+    m1: document.getElementById('inf-pdf-m1').value,
+    y1: parseInt(document.getElementById('inf-pdf-y1').value),
+  };
+}
+
+function filterRowsForReport(cliente, y0, m0, y1, m1) {
+  const i0 = y0 * 12 + MESES_ORD.indexOf(m0);
+  const i1 = y1 * 12 + MESES_ORD.indexOf(m1);
+  return DB.filter(r => {
+    if (cliente && r.cliente !== cliente) return false;
+    const ti = r.año * 12 + MESES_ORD.indexOf(r.mes);
+    return ti >= i0 && ti <= i1;
+  });
+}
+
+function buildClientReport(filters) {
+  const { cliente, m0, y0, m1, y1 } = filters;
+  const rows  = filterRowsForReport(cliente, y0, m0, y1, m1);
+  const total = sumI(rows);
+  const uds   = rows.reduce((s,r)=>s+(r.unidades||0),0);
+  const refs  = new Set(rows.map(r=>r.producto)).size;
+  const ticket= rows.length ? total/rows.length : 0;
+
+  // Monthly
+  const monthly = [];
+  for (let y=y0; y<=y1; y++) {
+    const ms = (y===y0&&y===y1) ? MESES_ORD.slice(MESES_ORD.indexOf(m0),MESES_ORD.indexOf(m1)+1)
+      : y===y0 ? MESES_ORD.slice(MESES_ORD.indexOf(m0))
+      : y===y1 ? MESES_ORD.slice(0,MESES_ORD.indexOf(m1)+1)
+      : MESES_ORD;
+    ms.forEach(m=>{
+      const mr=rows.filter(r=>r.año===y&&r.mes===m);
+      if(mr.length) monthly.push({label:`${MESES_C[MESES_ORD.indexOf(m)]} ${y}`,imp:sumI(mr),uds:mr.reduce((s,r)=>s+(r.unidades||0),0)});
+    });
+  }
+
+  // Top 20
+  const pm={};
+  rows.forEach(r=>{if(!pm[r.producto])pm[r.producto]={imp:0,uds:0};pm[r.producto].imp+=r.importe||0;pm[r.producto].uds+=r.unidades||0;});
+  const topProds=Object.entries(pm).map(([p,v])=>({p,...v})).sort((a,b)=>b.imp-a.imp).slice(0,20);
+
+  // Comp
+  let comp=null;
+  if(y0===y1){
+    const pr=filterRowsForReport(cliente,y0-1,m0,y1-1,m1);
+    if(pr.length){
+      const pt=sumI(pr),pu=pr.reduce((s,r)=>s+(r.unidades||0),0);
+      comp={prevLabel:`${m0.charAt(0).toUpperCase()+m0.slice(1)}–${m1.charAt(0).toUpperCase()+m1.slice(1)} ${y0-1}`,
+        currLabel:`${m0.charAt(0).toUpperCase()+m0.slice(1)}–${m1.charAt(0).toUpperCase()+m1.slice(1)} ${y0}`,
+        prevTotal:pt,currTotal:total,difI:total-pt,pct:pt?((total-pt)/pt*100):0,prevUds:pu,currUds:uds,difU:uds-pu};
+    }
+  }
+
+  const ml=m0.charAt(0).toUpperCase()+m0.slice(1), mr2=m1.charAt(0).toUpperCase()+m1.slice(1);
+  const periodLabel=y0===y1?`${ml}–${mr2} ${y0}`:`${ml} ${y0} – ${mr2} ${y1}`;
+  return {meta:{cliente,periodLabel,generated:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})},
+    kpis:{total,uds,refs,ticket},monthly,topProds,comp};
+}
+
+function updatePdfPreview() {
+  const f=getPdfFilters();
+  const el=document.getElementById('inf-pdf-preview');
+  if(!f.cliente){el.innerHTML='Selecciona un cliente para ver el resumen.';return;}
+  const r=buildClientReport(f);
+  el.innerHTML=`<strong>${r.meta.cliente}</strong><br>Periodo: ${r.meta.periodLabel}<br>
+    Facturación: <strong>${fmt(r.kpis.total)}</strong> · Unidades: ${fmtN(r.kpis.uds)} · Referencias: ${r.kpis.refs}
+    ${r.comp?`<br>Comparativa disponible vs ${r.comp.prevLabel}`:''}`;
+}
+
+function previewClientReport() {
+  const f=getPdfFilters();
+  if(!f.cliente){document.getElementById('inf-pdf-status').innerHTML='<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';return;}
+  const win=window.open('','_blank','width=920,height=700');
+  win.document.write(buildPdfHtml(buildClientReport(f)));
+  win.document.close(); win.focus();
+}
+
+function generateClientPDF() {
+  const f=getPdfFilters();
+  const st=document.getElementById('inf-pdf-status');
+  if(!f.cliente){st.innerHTML='<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';return;}
+  const area=document.getElementById('pdf-print-area');
+  area.innerHTML=buildPdfHtml(buildClientReport(f),true);
+  st.innerHTML='<span class="loader"></span> Abriendo impresión…';
+  setTimeout(()=>{window.print();st.innerHTML='<span style="color:var(--green)">✓ Diálogo de impresión abierto.</span>';},200);
+}
+
+function buildPdfHtml(r,inline=false){
+  const ps=r.comp?`<div class="pdf-section"><div class="pdf-section-title">Comparativa</div>
+    <table class="pdf-table"><thead><tr><th>Concepto</th><th>${r.comp.currLabel}</th><th>${r.comp.prevLabel}</th><th>Var. €</th><th>Var. %</th></tr></thead>
+    <tbody><tr><td>Facturación</td><td class="num">${r.kpis.total.toLocaleString('es-ES',{minimumFractionDigits:2})} €</td>
+      <td class="num">${r.comp.prevTotal.toLocaleString('es-ES',{minimumFractionDigits:2})} €</td>
+      <td class="num ${r.comp.difI>=0?'pos':'neg'}">${r.comp.difI>=0?'+':''}${r.comp.difI.toLocaleString('es-ES',{minimumFractionDigits:2})} €</td>
+      <td class="num ${r.comp.difI>=0?'pos':'neg'}">${r.comp.difI>=0?'+':''}${r.comp.pct.toFixed(1)}%</td></tr>
+    <tr><td>Unidades</td><td class="num">${r.kpis.uds.toLocaleString('es-ES')}</td>
+      <td class="num">${r.comp.prevUds.toLocaleString('es-ES')}</td>
+      <td class="num ${r.comp.difU>=0?'pos':'neg'}">${r.comp.difU>=0?'+':''}${r.comp.difU.toLocaleString('es-ES')}</td>
+      <td class="num">—</td></tr></tbody></table></div>`:'';
+  const body=`<div class="pdf-page">
+    <div class="pdf-header"><div class="pdf-logo">ventas<span>.</span>app</div>
+      <div class="pdf-client">${r.meta.cliente}</div>
+      <div class="pdf-period">Periodo: ${r.meta.periodLabel}</div>
+      <div class="pdf-date">Generado el ${r.meta.generated}</div></div>
+    <div class="pdf-section"><div class="pdf-section-title">Resumen</div>
+      <div class="pdf-kpi-grid">
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Facturación</div><div class="pdf-kpi-val">${(r.kpis.total/1000).toFixed(1)}k €</div></div>
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Unidades</div><div class="pdf-kpi-val">${r.kpis.uds.toLocaleString('es-ES')}</div></div>
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Referencias</div><div class="pdf-kpi-val">${r.kpis.refs}</div></div>
+        <div class="pdf-kpi"><div class="pdf-kpi-label">Ticket medio</div><div class="pdf-kpi-val">${r.kpis.ticket.toFixed(0)} €</div></div>
+      </div></div>
+    <div class="pdf-section"><div class="pdf-section-title">Evolución mensual</div>
+      <table class="pdf-table"><thead><tr><th>Mes</th><th class="num">Facturación €</th><th class="num">Uds</th></tr></thead>
+      <tbody>${r.monthly.map(m=>`<tr><td>${m.label}</td><td class="num">${m.imp.toLocaleString('es-ES',{minimumFractionDigits:2})}</td><td class="num">${m.uds.toLocaleString('es-ES')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="pdf-section"><div class="pdf-section-title">Top 20 productos</div>
+      <table class="pdf-table"><thead><tr><th>#</th><th>Referencia</th><th class="num">Importe €</th><th class="num">Uds</th><th class="num">%</th></tr></thead>
+      <tbody>${r.topProds.map((p,i)=>`<tr><td>${i+1}</td><td>${p.p}</td><td class="num">${p.imp.toLocaleString('es-ES',{minimumFractionDigits:2})}</td><td class="num">${p.uds.toLocaleString('es-ES')}</td><td class="num">${r.kpis.total?((p.imp/r.kpis.total)*100).toFixed(1)+'%':'—'}</td></tr>`).join('')}</tbody></table></div>
+    ${ps}
+    <div class="pdf-footer">ventas.app · ${r.meta.generated}</div></div>`;
+  if(inline) return body;
+  const css=`*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',Arial,sans-serif;font-size:11pt;color:#111;background:#fff;}
+    .pdf-page{padding:18mm 16mm;}.pdf-header{border-bottom:2px solid #1a3a6b;padding-bottom:8mm;margin-bottom:6mm;}
+    .pdf-logo{font-size:15pt;font-weight:700;color:#1a3a6b;}.pdf-logo span{color:#4f7cff;}
+    .pdf-client{font-size:14pt;font-weight:600;margin:3mm 0 1mm;}.pdf-period{font-size:10pt;color:#555;}.pdf-date{font-size:9pt;color:#888;margin-top:1mm;}
+    .pdf-section{margin-top:5mm;}.pdf-section-title{font-size:9.5pt;font-weight:700;color:#1a3a6b;border-bottom:1px solid #c0cce8;padding-bottom:1.5mm;margin-bottom:3mm;text-transform:uppercase;letter-spacing:.05em;}
+    .pdf-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin-bottom:3mm;}
+    .pdf-kpi{background:#f4f7fc;border-radius:2mm;padding:3mm 4mm;}
+    .pdf-kpi-label{font-size:7.5pt;color:#666;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm;}
+    .pdf-kpi-val{font-size:14pt;font-weight:700;color:#1a3a6b;}
+    .pdf-table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:1mm;}
+    .pdf-table th{background:#1a3a6b;color:#fff;padding:1.5mm 2.5mm;text-align:left;font-weight:600;}
+    .pdf-table td{padding:1.5mm 2.5mm;border-bottom:1px solid #e5e9f2;}
+    .pdf-table tr:nth-child(even) td{background:#f8faff;}
+    .num{text-align:right;font-family:monospace;}.pos{color:#1a7a4a;font-weight:600;}.neg{color:#c0392b;font-weight:600;}
+    .pdf-footer{margin-top:6mm;padding-top:3mm;border-top:1px solid #e0e6f0;font-size:8pt;color:#999;text-align:center;}`;
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe ${r.meta.cliente}</title><style>${css}</style></head><body>${body}</body></html>`;
+}
+
+function getXlFilters(){
+  return{cliente:document.getElementById('inf-xl-cliente').value,
+    m0:document.getElementById('inf-xl-m0').value,y0:parseInt(document.getElementById('inf-xl-y0').value),
+    m1:document.getElementById('inf-xl-m1').value,y1:parseInt(document.getElementById('inf-xl-y1').value)};
+}
+
+function updateExcelPreview(){
+  const f=getXlFilters(); const el=document.getElementById('inf-xl-preview');
+  if(!f.y0||!f.y1){el.textContent='Configura el periodo.';return;}
+  const rows=filterRowsForReport(f.cliente,f.y0,f.m0,f.y1,f.m1);
+  const cl=new Set(rows.map(r=>r.cliente)).size, pr=new Set(rows.map(r=>r.producto)).size;
+  el.innerHTML=`<strong>${rows.length.toLocaleString('es-ES')}</strong> registros · <strong>${cl}</strong> clientes · <strong>${pr}</strong> referencias<br>Facturación: <strong>${fmt(sumI(rows))}</strong>`;
+}
+
+function buildDashboardReport(f){
+  const{cliente,y0,m0,y1,m1}=f;
+  const rows=filterRowsForReport(cliente,y0,m0,y1,m1);
+  const wb=XLSX.utils.book_new();
+  const pl=`${m0} ${y0} – ${m1} ${y1}`;
+
+  // Hoja 1 Resumen
+  const ti=sumI(rows),tu=rows.reduce((s,r)=>s+(r.unidades||0),0);
+  const nc=new Set(rows.map(r=>r.cliente)).size,np=new Set(rows.map(r=>r.producto)).size;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['Informe ventas.app'],['Periodo:',pl],['Fecha:',new Date().toLocaleDateString('es-ES')],[],
+    ['RESUMEN'],['Facturación total (€)',+ti.toFixed(2)],['Unidades',tu],['Clientes activos',nc],['Productos vendidos',np]]),'Resumen');
+
+  // Hoja 2 Clientes
+  const cm={};
+  rows.forEach(r=>{if(!cm[r.cliente])cm[r.cliente]={imp:0,uds:0,refs:new Set()};cm[r.cliente].imp+=r.importe||0;cm[r.cliente].uds+=r.unidades||0;cm[r.cliente].refs.add(r.producto);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Cliente','Facturación (€)','Unidades','Nº referencias']].concat(
+    Object.entries(cm).map(([cl,v])=>[cl,+v.imp.toFixed(2),v.uds,v.refs.size]).sort((a,b)=>b[1]-a[1]))),'Clientes');
+
+  // Hoja 3 Comparativa
+  const pr2=filterRowsForReport(cliente,y0-1,m0,y1-1,m1);
+  const pm={};pr2.forEach(r=>{if(!pm[r.cliente])pm[r.cliente]={imp:0,uds:0};pm[r.cliente].imp+=r.importe||0;pm[r.cliente].uds+=r.unidades||0;});
+  const allC=new Set([...Object.keys(cm),...Object.keys(pm)]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Cliente','Actual (€)','Anterior (€)','Var. €','Var. %','Uds actual','Uds anterior']].concat(
+    [...allC].map(cl=>{const c=cm[cl]||{imp:0,uds:0},p=pm[cl]||{imp:0,uds:0},d=c.imp-p.imp;
+      return[cl,+c.imp.toFixed(2),+p.imp.toFixed(2),+d.toFixed(2),p.imp?+((d/p.imp)*100).toFixed(1):'—',c.uds,p.uds];
+    }).sort((a,b)=>b[1]-a[1]))),'Comparativa');
+
+  // Hoja 4 Alertas
+  const raw=calcAlertas();
+  const ad=[['Tipo','Cliente','Producto','Imp. actual','Imp. anterior','Var. €','Var. %','Uds perdidas']];
+  raw.gone.forEach(a=>ad.push(['Desaparecido',a.cliente,'',0,+a.impB.toFixed(2),+a.dif.toFixed(2),a.pct.toFixed(1),'']));
+  raw.risk.forEach(a=>ad.push(['En riesgo',a.cliente,'',+a.impA.toFixed(2),+a.impB.toFixed(2),+a.dif.toFixed(2),a.pct.toFixed(1),'']));
+  raw.ref.forEach(a=>ad.push(['Ref. caída',a.cliente,a.producto,'','','','',Math.abs(a.difU)]));
+  raw.opp.forEach(a=>ad.push(['Oportunidad',a.cliente,'',+a.impA.toFixed(2),+a.impB.toFixed(2),+a.dif.toFixed(2),a.pct.toFixed(1),'']));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ad),'Alertas');
+  return wb;
+}
+
+function generateDashboardExcel(){
+  const f=getXlFilters();const st=document.getElementById('inf-xl-status');
+  if(!f.y0||!f.y1){st.innerHTML='<span style="color:var(--orange)">⚠ Configura el periodo.</span>';return;}
+  try{
+    st.innerHTML='<span class="loader"></span> Generando…';
+    const wb=buildDashboardReport(f);
+    const fn=`ventas_${f.m0}${f.y0}-${f.m1}${f.y1}${f.cliente?'_'+f.cliente.split(',')[0].trim().replace(/\s/g,'_'):'_todos'}.xlsx`;
+    XLSX.writeFile(wb,fn);
+    st.innerHTML=`<span style="color:var(--green)">✓ Exportado: ${fn}</span>`;
+  }catch(e){st.innerHTML=`<span style="color:var(--red)">✗ Error: ${e.message}</span>`;}
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderLoginScreen();
+</script>
+<!-- Hidden PDF print area — only visible during window.print() -->
+<div id="pdf-print-area"></div>
+</body>
+</html>
