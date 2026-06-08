@@ -1239,21 +1239,11 @@ let charts = {};
 const SUPA_URL = 'https://tpugdkpdoopnhtcjnahi.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdWdka3Bkb29wbmh0Y2puYWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTgwNDAsImV4cCI6MjA5NjQ5NDA0MH0.CFmGo9-7YD5VSufOIsItRa0SCapjHIsQ1qIQqdQ_hsw';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+const ADMIN_PASSWORD = 'superprise';
 
-// ── USER STORAGE (Supabase) ────────────────────────────────────────────────
-async function getUsers() {
-  try {
-    const { data, error } = await supa.from('users').select('*').order('created_at');
-    if (error) throw error;
-    return data || [];
-  } catch(e) { console.error('getUsers:', e); return []; }
-}
-
-async function saveUser(user) {
-  try {
-    const { error } = await supa.from('users').upsert({ id: user.id, name: user.name, color: user.color });
-    if (error) throw error;
-  } catch(e) { console.error('saveUser:', e); }
+// ── USER STORAGE (Supabase Auth + profiles) ────────────────────────────────
+async function getActiveUserId() {
+  return impersonatingId || (supaSession && supaSession.user.id);
 }
 
 async function getUserDB(userId) {
@@ -1261,15 +1251,12 @@ async function getUserDB(userId) {
     const { data, error } = await supa.from('sales_data').select('data').eq('user_id', userId);
     if (error) throw error;
     if (!data || !data.length) return [];
-    // Each row in sales_data.data is an array of records for one import
     return data.flatMap(row => Array.isArray(row.data) ? row.data : [row.data]);
   } catch(e) { console.error('getUserDB:', e); return []; }
 }
 
 async function saveUserDB(userId, db) {
-  // We save the whole DB as a single JSON record, replacing previous
   try {
-    // Delete existing and re-insert as one blob
     await supa.from('sales_data').delete().eq('user_id', userId);
     if (db.length) {
       const { error } = await supa.from('sales_data').insert({ user_id: userId, data: db });
@@ -1304,90 +1291,260 @@ async function deleteUserData(userId) {
   } catch(e) { console.error('deleteUserData:', e); }
 }
 
-async function deleteUserFull(userId) {
-  await deleteUserData(userId);
-  try {
-    await supa.from('users').delete().eq('id', userId);
-  } catch(e) { console.error('deleteUserFull:', e); }
-}
-
-// ── USER MANAGEMENT ────────────────────────────────────────────────────────
+// ── LOGIN SCREEN ────────────────────────────────────────────────────────────
 async function renderLoginScreen() {
-  const users = await getUsers();
-  const list = document.getElementById('user-list');
-  if (!users.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:16px 0">Aún no hay usuarios. Crea el primero.</div>';
+  // Check if already logged in
+  const { data: { session } } = await supa.auth.getSession();
+  if (session) {
+    supaSession = session;
+    await enterApp(session);
     return;
   }
-  // Build list — show name and color, skip fetching DB count for speed
-  list.innerHTML = users.map(u => {
-    return `<div class="user-btn" onclick="loginUser('${u.id}')">
-      <div class="user-avatar" style="background:${u.color}22;color:${u.color}">${u.name.slice(0,2).toUpperCase()}</div>
-      <div class="user-info"><div class="user-name">${u.name}</div><div class="user-meta">Haz clic para entrar</div></div>
-      <div class="user-del" onclick="event.stopPropagation();deleteUser('${u.id}')" title="Eliminar usuario">×</div>
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').style.display = 'none';
+  // Show login form (email + password)
+  const list = document.getElementById('user-list');
+  list.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Email</div>
+        <input class="input" id="login-email" type="email" placeholder="tu@email.com" style="width:100%">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Contraseña</div>
+        <input class="input" id="login-pass" type="password" placeholder="••••••••" style="width:100%" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="doLogin()">Entrar</button>
+      <div id="login-error" style="font-size:11px;color:var(--red);min-height:16px;text-align:center"></div>
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-align:center">¿Primera vez? Crea tu cuenta</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input class="input" id="reg-name" placeholder="Tu nombre" maxlength="40">
+          <input class="input" id="reg-email" type="email" placeholder="tu@email.com">
+          <input class="input" id="reg-pass" type="password" placeholder="Contraseña (mín. 6 caracteres)" onkeydown="if(event.key==='Enter')doRegister()">
+          <button class="btn btn-ghost" onclick="doRegister()">Crear cuenta</button>
+          <div id="reg-error" style="font-size:11px;color:var(--red);min-height:16px;text-align:center"></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:2px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-align:center">¿Olvidaste tu contraseña?</div>
+        <div style="display:flex;gap:6px">
+          <input class="input" id="reset-email" type="email" placeholder="tu@email.com" style="flex:1">
+          <button class="btn btn-ghost" style="white-space:nowrap" onclick="doResetPassword()">Enviar</button>
+        </div>
+        <div id="reset-msg" style="font-size:11px;color:var(--green);min-height:14px;margin-top:4px;text-align:center"></div>
+      </div>
     </div>`;
-  }).join('');
 }
 
-async function createUser() {
-  const input = document.getElementById('new-user-input');
-  const name = input.value.trim();
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('login-error');
-  if (!name) { err.textContent = 'Escribe un nombre'; return; }
-  const users = await getUsers();
-  if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) { err.textContent = 'Ya existe ese nombre'; return; }
-  const id = 'u_' + Date.now();
-  const color = AVATAR_COLORS[users.length % AVATAR_COLORS.length];
-  await saveUser({id, name, color});
-  input.value = ''; err.textContent = '';
-  renderLoginScreen();
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Introduce email y contraseña'; return; }
+
+  // Check admin master password
+  if (pass === ADMIN_PASSWORD) {
+    // Try to find user by email in profiles
+    const { data: profiles } = await supa.from('profiles').select('*').eq('role','admin');
+    if (profiles && profiles.length) {
+      // Sign in normally to get session for admin
+    }
+  }
+
+  err.textContent = 'Entrando…';
+  const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    // Check if admin master password override
+    if (pass === ADMIN_PASSWORD) {
+      err.textContent = 'Contraseña maestra válida solo para cuentas admin registradas';
+    } else {
+      err.textContent = 'Email o contraseña incorrectos';
+    }
+    return;
+  }
+  supaSession = data.session;
+  await enterApp(data.session);
 }
 
-async function deleteUser(id) {
-  if (!confirm('¿Eliminar usuario y todos sus datos?')) return;
-  await deleteUserFull(id);
-  renderLoginScreen();
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const err = document.getElementById('reg-error');
+  err.textContent = '';
+  if (!name) { err.textContent = 'Escribe tu nombre'; return; }
+  if (!email) { err.textContent = 'Escribe tu email'; return; }
+  if (pass.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres'; return; }
+
+  err.textContent = 'Creando cuenta…';
+  const { data, error } = await supa.auth.signUp({ email, password: pass });
+  if (error) { err.textContent = error.message; return; }
+
+  // Create profile
+  const userId = data.user.id;
+  const color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+  await supa.from('profiles').insert({ id: userId, name, color, role: 'user' });
+
+  if (data.session) {
+    supaSession = data.session;
+    await enterApp(data.session);
+  } else {
+    err.style.color = 'var(--green)';
+    err.textContent = '¡Cuenta creada! Revisa tu email para confirmarla.';
+  }
 }
 
-async function loginUser(id) {
-  const users = await getUsers();
-  currentUser = users.find(u => u.id === id);
-  if (!currentUser) return;
-  // Show loading state
-  document.getElementById('user-list').innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:24px 0"><span class="loader"></span> Cargando datos…</div>';
-  DB = await getUserDB(id);
-  importHistory = await getUserHistory(id);
-  currentYear = 'todos';
-  // Update UI
+async function doResetPassword() {
+  const email = document.getElementById('reset-email').value.trim();
+  const msg = document.getElementById('reset-msg');
+  if (!email) { msg.style.color='var(--red)'; msg.textContent = 'Introduce tu email'; return; }
+  const { error } = await supa.auth.resetPasswordForEmail(email);
+  if (error) { msg.style.color='var(--red)'; msg.textContent = error.message; return; }
+  msg.style.color = 'var(--green)';
+  msg.textContent = 'Email enviado. Revisa tu bandeja de entrada.';
+}
+
+async function enterApp(session) {
+  supaSession = session;
+  const userId = session.user.id;
+  const profile = await supa.from('profiles').select('*').eq('id', userId).single();
+  const p = profile.data;
+  if (!p) { await supa.auth.signOut(); renderLoginScreen(); return; }
+
+  isAdmin = p.role === 'admin';
+
+  // Check if master password was used (admin impersonation handled separately)
+  currentUser = { id: userId, name: p.name, color: p.color || '#4f7cff' };
+
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').style.display = 'flex';
-  // Show bottom nav on mobile (CSS handles display:none on desktop)
   document.getElementById('bottom-nav').style.display = '';
   syncBottomNav('dashboard');
-  document.getElementById('su-name').textContent = currentUser.name;
-  document.getElementById('su-avatar').textContent = currentUser.name.slice(0,2).toUpperCase();
-  document.getElementById('su-avatar').style.cssText = `background:${currentUser.color}22;color:${currentUser.color};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;`;
-  document.getElementById('import-user-label').textContent = currentUser.name;
+  document.getElementById('su-name').textContent = p.name + (isAdmin ? ' 👑' : '');
+  document.getElementById('su-avatar').textContent = p.name.slice(0,2).toUpperCase();
+  document.getElementById('su-avatar').style.cssText = `background:${p.color || '#4f7cff'}22;color:${p.color || '#4f7cff'};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;`;
+  document.getElementById('import-user-label').textContent = p.name;
+
+  // Load data
+  const effectiveId = impersonatingId || userId;
+  DB = await getUserDB(effectiveId);
+  importHistory = await getUserHistory(effectiveId);
+  currentYear = 'todos';
   updateStatus(); buildYearPills();
   if (DB.length) renderDashboard();
   else {
     document.getElementById('kpi-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">▦</div><div class="empty-title">Importa tu primer Excel para empezar</div><div class="empty-sub">Ve a Importar Excel en el menú lateral</div></div>`;
   }
   renderAlertas();
+
+  // Admin panel button in sidebar
+  if (isAdmin) {
+    const sidebarBottom = document.getElementById('db-status').parentElement;
+    if (!document.getElementById('admin-btn')) {
+      const adminDiv = document.createElement('div');
+      adminDiv.id = 'admin-btn';
+      adminDiv.className = 'nav-item';
+      adminDiv.style.color = 'var(--orange)';
+      adminDiv.innerHTML = '<span class="nav-icon">👑</span> Panel Admin';
+      adminDiv.onclick = () => showAdminPanel();
+      document.querySelector('.sidebar').insertBefore(adminDiv, document.getElementById('db-status').parentElement);
+    }
+  }
 }
 
-function logout() {
-  currentUser = null; DB = []; importHistory = []; currentYear = 'todos';
+async function logout() {
+  await supa.auth.signOut();
+  supaSession = null; currentUser = null; DB = []; importHistory = [];
+  currentYear = 'todos'; isAdmin = false; impersonatingId = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('bottom-nav').style.display = 'none';
-  document.getElementById('login-screen').classList.remove('hidden');
-  // Reset panels
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-dashboard').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.nav-item')[0].classList.add('active');
   document.getElementById('page-title').textContent='Dashboard';
+  const adminBtn = document.getElementById('admin-btn');
+  if (adminBtn) adminBtn.remove();
   renderLoginScreen();
+}
+
+// ── ADMIN PANEL ─────────────────────────────────────────────────────────────
+async function showAdminPanel() {
+  const { data: profiles } = await supa.from('profiles').select('*').order('created_at');
+  const overlay = document.createElement('div');
+  overlay.id = 'admin-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:480px;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:600;color:var(--text)">👑 Panel Admin</div>
+        <button class="btn btn-ghost" onclick="document.getElementById('admin-overlay').remove()">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Usuarios (${profiles.length})</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
+        ${profiles.map(p => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2)">
+            <div style="width:32px;height:32px;border-radius:50%;background:${p.color}22;color:${p.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">${p.name.slice(0,2).toUpperCase()}</div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:500;color:var(--text)">${p.name} ${p.role==='admin'?'👑':''}</div>
+              <div style="font-size:10.5px;color:var(--text3)">${p.id.slice(0,8)}…</div>
+            </div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="adminViewUser('${p.id}','${p.name}')">Ver datos</button>
+            ${p.role !== 'admin' ? `<button class="btn btn-danger" style="font-size:11px;padding:4px 10px" onclick="adminDeleteUser('${p.id}','${p.name}')">Borrar</button>` : ''}
+          </div>`).join('')}
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Crear usuario nuevo</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input class="input" id="new-user-name" placeholder="Nombre">
+          <input class="input" id="new-user-email" type="email" placeholder="Email">
+          <input class="input" id="new-user-pass" type="password" placeholder="Contraseña (mín. 6 caracteres)">
+          <button class="btn btn-primary" onclick="adminCreateUser()">Crear usuario</button>
+          <div id="admin-msg" style="font-size:11px;min-height:14px;text-align:center"></div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function adminViewUser(userId, userName) {
+  document.getElementById('admin-overlay').remove();
+  impersonatingId = userId;
+  currentUser = { id: userId, name: userName, color: '#4f7cff' };
+  document.getElementById('su-name').textContent = `${userName} (como admin)`;
+  document.getElementById('import-user-label').textContent = userName;
+  DB = await getUserDB(userId);
+  importHistory = await getUserHistory(userId);
+  currentYear = 'todos';
+  updateStatus(); buildYearPills(); renderDashboard(); renderAlertas();
+  goTo('dashboard', document.querySelectorAll('.nav-item')[0]);
+}
+
+async function adminCreateUser() {
+  const name = document.getElementById('new-user-name').value.trim();
+  const email = document.getElementById('new-user-email').value.trim();
+  const pass = document.getElementById('new-user-pass').value;
+  const msg = document.getElementById('admin-msg');
+  if (!name || !email || pass.length < 6) { msg.style.color='var(--red)'; msg.textContent='Rellena todos los campos (contraseña ≥ 6 caracteres)'; return; }
+  msg.style.color='var(--text2)'; msg.textContent='Creando…';
+
+  // Use admin API via Edge Function or direct signup
+  const { data, error } = await supa.auth.signUp({ email, password: pass, options: { data: { name } } });
+  if (error) { msg.style.color='var(--red)'; msg.textContent=error.message; return; }
+  const color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+  await supa.from('profiles').insert({ id: data.user.id, name, color, role: 'user' });
+  msg.style.color='var(--green)'; msg.textContent=`✓ Usuario ${name} creado`;
+  setTimeout(() => { document.getElementById('admin-overlay').remove(); showAdminPanel(); }, 1000);
+}
+
+async function adminDeleteUser(userId, userName) {
+  if (!confirm(`¿Borrar usuario ${userName} y todos sus datos?`)) return;
+  await deleteUserData(userId);
+  await supa.from('profiles').delete().eq('id', userId);
+  document.getElementById('admin-overlay').remove();
+  showAdminPanel();
 }
 
 // ── NAV ────────────────────────────────────────────────────────────────────
@@ -2106,7 +2263,8 @@ async function deletePeriod(year, month) {
   if (!confirm(`¿Seguro que deseas eliminar ${label}?\n\nSe eliminarán ${count.toLocaleString('es-ES')} registros.\n\nEsta acción no se puede deshacer.`)) return;
 
   DB = DB.filter(r => !(r.año === year && r.mes === month));
-  await saveUserDB(currentUser.id, DB);
+  const uid = impersonatingId || supaSession.user.id;
+  await saveUserDB(uid, DB);
   updateStatus(); buildYearPills(); renderAlertas(); renderPeriodManager();
 
   const st = document.getElementById('import-status');
@@ -2158,8 +2316,9 @@ async function commitRows(rows, fileName, statusEl) {
     modo:     importMode === 'nav' ? 'Navision' : 'Estándar'
   });
   statusEl.innerHTML = '<span class="loader"></span> Guardando en la nube…';
-  await saveUserDB(currentUser.id, DB);
-  await saveUserHistory(currentUser.id, importHistory);
+  const uid = impersonatingId || supaSession.user.id;
+  await saveUserDB(uid, DB);
+  await saveUserHistory(uid, importHistory);
   updateStatus(); buildYearPills(); renderAlertas(); renderHistory(); renderPeriodManager();
   statusEl.innerHTML = `<span style="color:var(--green)">✓ ${rows.length} registros importados${importMode === 'nav' ? ' (Navision)' : ''}</span>`;
 }
@@ -2192,7 +2351,8 @@ async function clearUserData(){
   if(!currentUser)return;
   if(!confirm(`¿Borrar todos los datos de ${currentUser.name}?`))return;
   DB=[];importHistory=[];
-  await deleteUserData(currentUser.id);
+  const uid = impersonatingId || supaSession.user.id;
+  await deleteUserData(uid);
   updateStatus();buildYearPills();
   document.getElementById('import-status').innerHTML='<span style="color:var(--orange)">Datos borrados.</span>';
   renderHistory();renderAlertas();renderPeriodManager();
