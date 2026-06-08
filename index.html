@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ClientRadar</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -983,40 +984,26 @@ tbody tr:last-child td{border-bottom:none;}
             <div class="inf-row">
               <div class="inf-field" style="flex:2;min-width:200px">
                 <label>Cliente</label>
-                <select id="inf-pdf-cliente" onchange="updatePdfPreview()"></select>
+                <select id="inf-pdf-cliente"></select>
               </div>
             </div>
             <div class="inf-row">
               <div class="inf-field">
                 <label>Mes inicio</label>
-                <select id="inf-pdf-m0" onchange="updatePdfPreview()">
-                  <option value="enero">Enero</option><option value="febrero">Febrero</option>
-                  <option value="marzo">Marzo</option><option value="abril">Abril</option>
-                  <option value="mayo">Mayo</option><option value="junio">Junio</option>
-                  <option value="julio">Julio</option><option value="agosto">Agosto</option>
-                  <option value="septiembre">Septiembre</option><option value="octubre">Octubre</option>
-                  <option value="noviembre">Noviembre</option><option value="diciembre">Diciembre</option>
-                </select>
+                <select id="inf-pdf-m0"></select>
               </div>
               <div class="inf-field">
                 <label>Año inicio</label>
-                <select id="inf-pdf-y0" onchange="updatePdfPreview()"></select>
+                <select id="inf-pdf-y0"></select>
               </div>
               <div class="inf-sep">→</div>
               <div class="inf-field">
                 <label>Mes fin</label>
-                <select id="inf-pdf-m1" onchange="updatePdfPreview()">
-                  <option value="enero">Enero</option><option value="febrero">Febrero</option>
-                  <option value="marzo">Marzo</option><option value="abril">Abril</option>
-                  <option value="mayo">Mayo</option><option value="junio">Junio</option>
-                  <option value="julio">Julio</option><option value="agosto">Agosto</option>
-                  <option value="septiembre">Septiembre</option><option value="octubre">Octubre</option>
-                  <option value="noviembre">Noviembre</option><option value="diciembre" selected>Diciembre</option>
-                </select>
+                <select id="inf-pdf-m1"></select>
               </div>
               <div class="inf-field">
                 <label>Año fin</label>
-                <select id="inf-pdf-y1" onchange="updatePdfPreview()"></select>
+                <select id="inf-pdf-y1"></select>
               </div>
             </div>
             <div class="inf-preview" id="inf-pdf-preview">Selecciona un cliente y periodo para ver el resumen.</div>
@@ -1035,40 +1022,26 @@ tbody tr:last-child td{border-bottom:none;}
             <div class="inf-row">
               <div class="inf-field">
                 <label>Mes inicio</label>
-                <select id="inf-xl-m0" onchange="updateExcelPreview()">
-                  <option value="enero">Enero</option><option value="febrero">Febrero</option>
-                  <option value="marzo">Marzo</option><option value="abril">Abril</option>
-                  <option value="mayo">Mayo</option><option value="junio">Junio</option>
-                  <option value="julio">Julio</option><option value="agosto">Agosto</option>
-                  <option value="septiembre">Septiembre</option><option value="octubre">Octubre</option>
-                  <option value="noviembre">Noviembre</option><option value="diciembre">Diciembre</option>
-                </select>
+                <select id="inf-xl-m0"></select>
               </div>
               <div class="inf-field">
                 <label>Año inicio</label>
-                <select id="inf-xl-y0" onchange="updateExcelPreview()"></select>
+                <select id="inf-xl-y0"></select>
               </div>
               <div class="inf-sep">→</div>
               <div class="inf-field">
                 <label>Mes fin</label>
-                <select id="inf-xl-m1" onchange="updateExcelPreview()">
-                  <option value="enero">Enero</option><option value="febrero">Febrero</option>
-                  <option value="marzo">Marzo</option><option value="abril">Abril</option>
-                  <option value="mayo">Mayo</option><option value="junio">Junio</option>
-                  <option value="julio">Julio</option><option value="agosto">Agosto</option>
-                  <option value="septiembre">Septiembre</option><option value="octubre">Octubre</option>
-                  <option value="noviembre">Noviembre</option><option value="diciembre" selected>Diciembre</option>
-                </select>
+                <select id="inf-xl-m1"></select>
               </div>
               <div class="inf-field">
                 <label>Año fin</label>
-                <select id="inf-xl-y1" onchange="updateExcelPreview()"></select>
+                <select id="inf-xl-y1"></select>
               </div>
             </div>
             <div class="inf-row">
               <div class="inf-field" style="flex:2;min-width:200px">
                 <label>Filtrar cliente (opcional)</label>
-                <select id="inf-xl-cliente" onchange="updateExcelPreview()"></select>
+                <select id="inf-xl-cliente"></select>
               </div>
             </div>
             <div class="inf-preview" id="inf-xl-preview">Configura el periodo para ver el resumen.</div>
@@ -1262,79 +1235,128 @@ let importHistory = [];
 let currentYear = 'todos';
 let charts = {};
 
-// ── USER STORAGE ───────────────────────────────────────────────────────────
-function getUsers() {
-  try { return JSON.parse(localStorage.getItem('vapp_users')||'[]'); } catch(e){ return []; }
+// ── SUPABASE ───────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://tpugdkpdoopnhtcjnahi.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdWdka3Bkb29wbmh0Y2puYWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTgwNDAsImV4cCI6MjA5NjQ5NDA0MH0.CFmGo9-7YD5VSufOIsItRa0SCapjHIsQ1qIQqdQ_hsw';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── USER STORAGE (Supabase) ────────────────────────────────────────────────
+async function getUsers() {
+  try {
+    const { data, error } = await supa.from('users').select('*').order('created_at');
+    if (error) throw error;
+    return data || [];
+  } catch(e) { console.error('getUsers:', e); return []; }
 }
-function saveUsers(users) {
-  localStorage.setItem('vapp_users', JSON.stringify(users));
+
+async function saveUser(user) {
+  try {
+    const { error } = await supa.from('users').upsert({ id: user.id, name: user.name, color: user.color });
+    if (error) throw error;
+  } catch(e) { console.error('saveUser:', e); }
 }
-function getUserDB(userId) {
-  try { return JSON.parse(localStorage.getItem(`vapp_db_${userId}`)||'[]'); } catch(e){ return []; }
+
+async function getUserDB(userId) {
+  try {
+    const { data, error } = await supa.from('sales_data').select('data').eq('user_id', userId);
+    if (error) throw error;
+    if (!data || !data.length) return [];
+    // Each row in sales_data.data is an array of records for one import
+    return data.flatMap(row => Array.isArray(row.data) ? row.data : [row.data]);
+  } catch(e) { console.error('getUserDB:', e); return []; }
 }
-function saveUserDB(userId, db) {
-  localStorage.setItem(`vapp_db_${userId}`, JSON.stringify(db));
+
+async function saveUserDB(userId, db) {
+  // We save the whole DB as a single JSON record, replacing previous
+  try {
+    // Delete existing and re-insert as one blob
+    await supa.from('sales_data').delete().eq('user_id', userId);
+    if (db.length) {
+      const { error } = await supa.from('sales_data').insert({ user_id: userId, data: db });
+      if (error) throw error;
+    }
+  } catch(e) { console.error('saveUserDB:', e); }
 }
-function getUserHistory(userId) {
-  try { return JSON.parse(localStorage.getItem(`vapp_hist_${userId}`)||'[]'); } catch(e){ return []; }
+
+async function getUserHistory(userId) {
+  try {
+    const { data, error } = await supa.from('manual_months').select('month_data').eq('user_id', userId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(r => r.month_data);
+  } catch(e) { console.error('getUserHistory:', e); return []; }
 }
-function saveUserHistory(userId, hist) {
-  localStorage.setItem(`vapp_hist_${userId}`, JSON.stringify(hist));
+
+async function saveUserHistory(userId, hist) {
+  try {
+    await supa.from('manual_months').delete().eq('user_id', userId);
+    if (hist.length) {
+      const rows = hist.map(h => ({ user_id: userId, month_data: h }));
+      const { error } = await supa.from('manual_months').insert(rows);
+      if (error) throw error;
+    }
+  } catch(e) { console.error('saveUserHistory:', e); }
 }
-function deleteUserData(userId) {
-  localStorage.removeItem(`vapp_db_${userId}`);
-  localStorage.removeItem(`vapp_hist_${userId}`);
+
+async function deleteUserData(userId) {
+  try {
+    await supa.from('sales_data').delete().eq('user_id', userId);
+    await supa.from('manual_months').delete().eq('user_id', userId);
+  } catch(e) { console.error('deleteUserData:', e); }
+}
+
+async function deleteUserFull(userId) {
+  await deleteUserData(userId);
+  try {
+    await supa.from('users').delete().eq('id', userId);
+  } catch(e) { console.error('deleteUserFull:', e); }
 }
 
 // ── USER MANAGEMENT ────────────────────────────────────────────────────────
-function renderLoginScreen() {
-  const users = getUsers();
+async function renderLoginScreen() {
+  const users = await getUsers();
   const list = document.getElementById('user-list');
   if (!users.length) {
     list.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:16px 0">Aún no hay usuarios. Crea el primero.</div>';
     return;
   }
+  // Build list — show name and color, skip fetching DB count for speed
   list.innerHTML = users.map(u => {
-    const db = getUserDB(u.id);
-    const años = [...new Set(db.map(r=>r.año))].sort();
-    const meta = db.length ? `${db.length.toLocaleString('es-ES')} registros · ${años.join(', ')}` : 'Sin datos';
     return `<div class="user-btn" onclick="loginUser('${u.id}')">
       <div class="user-avatar" style="background:${u.color}22;color:${u.color}">${u.name.slice(0,2).toUpperCase()}</div>
-      <div class="user-info"><div class="user-name">${u.name}</div><div class="user-meta">${meta}</div></div>
+      <div class="user-info"><div class="user-name">${u.name}</div><div class="user-meta">Haz clic para entrar</div></div>
       <div class="user-del" onclick="event.stopPropagation();deleteUser('${u.id}')" title="Eliminar usuario">×</div>
     </div>`;
   }).join('');
 }
 
-function createUser() {
+async function createUser() {
   const input = document.getElementById('new-user-input');
   const name = input.value.trim();
   const err = document.getElementById('login-error');
   if (!name) { err.textContent = 'Escribe un nombre'; return; }
-  const users = getUsers();
+  const users = await getUsers();
   if (users.find(u => u.name.toLowerCase() === name.toLowerCase())) { err.textContent = 'Ya existe ese nombre'; return; }
   const id = 'u_' + Date.now();
   const color = AVATAR_COLORS[users.length % AVATAR_COLORS.length];
-  users.push({id, name, color});
-  saveUsers(users);
+  await saveUser({id, name, color});
   input.value = ''; err.textContent = '';
   renderLoginScreen();
 }
 
-function deleteUser(id) {
+async function deleteUser(id) {
   if (!confirm('¿Eliminar usuario y todos sus datos?')) return;
-  const users = getUsers().filter(u => u.id !== id);
-  saveUsers(users);
-  deleteUserData(id);
+  await deleteUserFull(id);
   renderLoginScreen();
 }
 
-function loginUser(id) {
-  const users = getUsers();
+async function loginUser(id) {
+  const users = await getUsers();
   currentUser = users.find(u => u.id === id);
   if (!currentUser) return;
-  DB = getUserDB(id);
-  importHistory = getUserHistory(id);
+  // Show loading state
+  document.getElementById('user-list').innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:24px 0"><span class="loader"></span> Cargando datos…</div>';
+  DB = await getUserDB(id);
+  importHistory = await getUserHistory(id);
   currentYear = 'todos';
   // Update UI
   document.getElementById('login-screen').classList.add('hidden');
@@ -2077,14 +2099,14 @@ function renderPeriodManager() {
  * @param {number} year
  * @param {string} month
  */
-function deletePeriod(year, month) {
+async function deletePeriod(year, month) {
   const count = DB.filter(r => r.año === year && r.mes === month).length;
   const label = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
 
   if (!confirm(`¿Seguro que deseas eliminar ${label}?\n\nSe eliminarán ${count.toLocaleString('es-ES')} registros.\n\nEsta acción no se puede deshacer.`)) return;
 
   DB = DB.filter(r => !(r.año === year && r.mes === month));
-  saveUserDB(currentUser.id, DB);
+  await saveUserDB(currentUser.id, DB);
   updateStatus(); buildYearPills(); renderAlertas(); renderPeriodManager();
 
   const st = document.getElementById('import-status');
@@ -2100,7 +2122,7 @@ function deletePeriod(year, month) {
  * @param {string}   fileName
  * @param {HTMLElement} statusEl
  */
-function commitRows(rows, fileName, statusEl) {
+async function commitRows(rows, fileName, statusEl) {
   if (!rows.length) {
     statusEl.innerHTML = '<span style="color:var(--orange)">⚠ Sin filas válidas para importar.</span>';
     return;
@@ -2135,8 +2157,9 @@ function commitRows(rows, fileName, statusEl) {
     periodos: combos.map(c => c.replace('|', ' ')),
     modo:     importMode === 'nav' ? 'Navision' : 'Estándar'
   });
-  saveUserDB(currentUser.id, DB);
-  saveUserHistory(currentUser.id, importHistory);
+  statusEl.innerHTML = '<span class="loader"></span> Guardando en la nube…';
+  await saveUserDB(currentUser.id, DB);
+  await saveUserHistory(currentUser.id, importHistory);
   updateStatus(); buildYearPills(); renderAlertas(); renderHistory(); renderPeriodManager();
   statusEl.innerHTML = `<span style="color:var(--green)">✓ ${rows.length} registros importados${importMode === 'nav' ? ' (Navision)' : ''}</span>`;
 }
@@ -2165,11 +2188,11 @@ function renderHistory(){
   renderPeriodManager();
 }
 
-function clearUserData(){
+async function clearUserData(){
   if(!currentUser)return;
   if(!confirm(`¿Borrar todos los datos de ${currentUser.name}?`))return;
   DB=[];importHistory=[];
-  deleteUserData(currentUser.id);
+  await deleteUserData(currentUser.id);
   updateStatus();buildYearPills();
   document.getElementById('import-status').innerHTML='<span style="color:var(--orange)">Datos borrados.</span>';
   renderHistory();renderAlertas();renderPeriodManager();
@@ -3653,104 +3676,46 @@ function switchInfTab(tab, el) {
 }
 
 function initInformesPanel() {
-  const st = document.getElementById('inf-pdf-status');
-
-  // ── Sin datos ──────────────────────────────────────────────────────────
-  if (!DB.length) {
-    ['inf-pdf-cliente','inf-pdf-y0','inf-pdf-y1',
-     'inf-xl-y0','inf-xl-y1','inf-xl-cliente'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.innerHTML = '<option>—</option>'; el.disabled = true; }
-    });
-    if (st) st.innerHTML = '<span style="color:var(--text3)">No existen datos disponibles para generar informes.</span>';
-    const xp = document.getElementById('inf-xl-preview');
-    if (xp) xp.textContent = 'No existen datos disponibles para generar informes.';
-    return;
-  }
-
-  // ── Fuente de datos: misma que Dashboard / Clientes / Alertas ─────────
-  const años     = getYears();
+  if (!DB.length) return;
   const clientes = [...new Set(DB.map(r => r.cliente))].sort();
+  const años     = getYears();
 
-  // Detectar primer y último periodo real
-  const sortedPeriods = DB
-    .map(r => ({ a: r.año, mi: mesIdx(r.mes) }))
-    .filter(r => r.mi !== -1)
-    .sort((a, b) => a.a !== b.a ? a.a - b.a : a.mi - b.mi);
+  const pdfCl = document.getElementById('inf-pdf-cliente');
+  pdfCl.innerHTML = '<option value="">— selecciona cliente —</option>' +
+    clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+  pdfCl.onchange = updatePdfPreview;
 
-  const primerAño = sortedPeriods.length ? sortedPeriods[0].a                          : años[0];
-  const primerMes = sortedPeriods.length ? MESES_ORD[sortedPeriods[0].mi]              : MESES_ORD[0];
-  const últimoAño = sortedPeriods.length ? sortedPeriods[sortedPeriods.length-1].a     : años[años.length-1];
-  const últimoMes = sortedPeriods.length ? MESES_ORD[sortedPeriods[sortedPeriods.length-1].mi] : MESES_ORD[11];
-
-  console.group('initInformesPanel DEBUG');
-  console.log('Años detectados:', años);
-  console.log('Registros totales:', DB.length);
-  console.log('Primer periodo:', primerMes, primerAño);
-  console.log('Último periodo:', últimoMes, últimoAño);
-  console.groupEnd();
-
-  // ── Helper: poblar select de años ─────────────────────────────────────
-  function fillAños(id, defaultAño) {
+  ['inf-pdf-m0','inf-pdf-m1'].forEach((id, i) => {
     const el = document.getElementById(id);
-    if (!el) return;
-    el.disabled = false;
+    el.innerHTML = MESES_ORD.map((m,j) =>
+      `<option value="${m}"${(i===0&&j===0)||(i===1&&j===11)?'selected':''}>${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
+    el.onchange = updatePdfPreview;
+  });
+  ['inf-pdf-y0','inf-pdf-y1'].forEach(id => {
+    const el = document.getElementById(id);
     el.innerHTML = años.map(a =>
-      `<option value="${a}"${a === defaultAño ? ' selected' : ''}>${a}</option>`
-    ).join('');
-  }
-
-  // ── Helper: seleccionar mes por valor en un select estático ───────────
-  function selectMes(id, mes) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.disabled = false;
-    // Select the option whose value matches (normalized)
-    [...el.options].forEach(opt => {
-      opt.selected = normMes(opt.value) === normMes(mes);
-    });
-  }
-
-  // ── Poblar años (meses ya están en el HTML) ───────────────────────────
-  fillAños('inf-pdf-y0', primerAño);
-  fillAños('inf-pdf-y1', últimoAño);
-  fillAños('inf-xl-y0',  primerAño);
-  fillAños('inf-xl-y1',  últimoAño);
-
-  // Seleccionar mes correcto en los selects estáticos
-  selectMes('inf-pdf-m0', primerMes);
-  selectMes('inf-pdf-m1', últimoMes);
-  selectMes('inf-xl-m0',  primerMes);
-  selectMes('inf-xl-m1',  últimoMes);
-
-  // Asegurarse de que los selects de mes no están deshabilitados
-  ['inf-pdf-m0','inf-pdf-m1','inf-xl-m0','inf-xl-m1'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = false;
+      `<option value="${a}"${a===años[años.length-1]?'selected':''}>${a}</option>`).join('');
+    el.onchange = updatePdfPreview;
   });
 
-  // ── Clientes ──────────────────────────────────────────────────────────
-  const pdfCl = document.getElementById('inf-pdf-cliente');
-  if (pdfCl) {
-    pdfCl.disabled = false;
-    pdfCl.innerHTML = '<option value="">— selecciona cliente —</option>' +
-      clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-  }
-
+  ['inf-xl-m0','inf-xl-m1'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.innerHTML = MESES_ORD.map((m,j) =>
+      `<option value="${m}"${(i===0&&j===0)||(i===1&&j===11)?'selected':''}>${m.charAt(0).toUpperCase()+m.slice(1)}</option>`).join('');
+    el.onchange = updateExcelPreview;
+  });
+  ['inf-xl-y0','inf-xl-y1'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = años.map(a =>
+      `<option value="${a}"${a===años[años.length-1]?'selected':''}>${a}</option>`).join('');
+    el.onchange = updateExcelPreview;
+  });
   const xlCl = document.getElementById('inf-xl-cliente');
-  if (xlCl) {
-    xlCl.disabled = false;
-    xlCl.innerHTML = '<option value="">Todos los clientes</option>' +
-      clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-  }
-
-  // ── Limpiar status y actualizar previews ──────────────────────────────
-  if (st) st.innerHTML = '';
-  updatePdfPreview();
+  xlCl.innerHTML = '<option value="">Todos los clientes</option>' +
+    clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+  xlCl.onchange = updateExcelPreview;
   updateExcelPreview();
 }
-
-
 
 function getPdfFilters() {
   return {
@@ -3762,107 +3727,14 @@ function getPdfFilters() {
   };
 }
 
-/**
- * Normaliza nombre de mes para comparación robusta.
- * "Enero" / "enero" / "ENERO" / "septiembre" → sin tildes, minúsculas.
- */
-function normMes(m) {
-  return String(m || '').toLowerCase().trim()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-/** Índice de un mes en MESES_ORD con normalización. Devuelve -1 si no encuentra. */
-function mesIdx(m) {
-  const nm = normMes(m);
-  return MESES_ORD.findIndex(mo => normMes(mo) === nm);
-}
-
-/**
- * Filtra filas de DB para el rango [y0,m0] → [y1,m1] inclusive.
- * Normaliza meses para comparación robusta frente a tildes y capitalización.
- */
 function filterRowsForReport(cliente, y0, m0, y1, m1) {
-  const idx0 = mesIdx(m0);
-  const idx1 = mesIdx(m1);
-
-  if (idx0 === -1 || idx1 === -1) {
-    console.error('filterRowsForReport: mes no reconocido', { m0, m1, idx0, idx1 });
-    return [];
-  }
-
-  const i0 = y0 * 12 + idx0;
-  const i1 = y1 * 12 + idx1;
-
+  const i0 = y0 * 12 + MESES_ORD.indexOf(m0);
+  const i1 = y1 * 12 + MESES_ORD.indexOf(m1);
   return DB.filter(r => {
     if (cliente && r.cliente !== cliente) return false;
-    const mi = mesIdx(r.mes);
-    if (mi === -1) return false;
-    const ti = r.año * 12 + mi;
+    const ti = r.año * 12 + MESES_ORD.indexOf(r.mes);
     return ti >= i0 && ti <= i1;
   });
-}
-
-function generateClientPDF() {
-  const f  = getPdfFilters();
-  const st = document.getElementById('inf-pdf-status');
-
-  if (!f.cliente) {
-    st.innerHTML = '<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';
-    return;
-  }
-
-  const datosCliente = filterRowsForReport(f.cliente, f.y0, f.m0, f.y1, f.m1);
-  const soloCliente  = DB.filter(r => r.cliente === f.cliente);
-
-  console.group('=== generateClientPDF DEBUG ===');
-  console.log('Cliente seleccionado:', f.cliente);
-  console.log('Periodo:', f.m0, f.y0, '→', f.m1, f.y1);
-  console.log('mesIdx(m0):', mesIdx(f.m0), '| mesIdx(m1):', mesIdx(f.m1));
-  console.log('Registros encontrados:', datosCliente.length);
-  console.log('Primeros 5 registros:', datosCliente.slice(0, 5));
-  console.log('Registros del cliente (sin filtro fecha):', soloCliente.length);
-  console.log('Años activos del cliente:', [...new Set(soloCliente.map(r => r.año))]);
-  console.log('Meses únicos del cliente:', [...new Set(soloCliente.map(r => r.mes))].slice(0, 6));
-  console.groupEnd();
-
-  if (datosCliente.length === 0) {
-    const detalle = soloCliente.length > 0
-      ? ` El cliente tiene ${soloCliente.length} registros históricos fuera del periodo seleccionado.`
-      : ' El cliente no tiene registros en la base de datos.';
-    st.innerHTML = `<span style="color:var(--red)">⚠ No existen datos para el cliente y periodo seleccionados.${detalle}</span>`;
-    return;
-  }
-
-  // Generar el HTML completo con estilos embebidos
-  const html = buildPdfHtml(buildClientReport(f), false);  // false = HTML completo con <html>+<head>+CSS
-
-  // Abrir ventana e imprimir automáticamente
-  const win = window.open('', '_blank', 'width=920,height=700');
-  if (!win) {
-    st.innerHTML = '<span style="color:var(--orange)">⚠ El navegador bloqueó la ventana. Permite popups para este fichero y vuelve a intentarlo.</span>';
-    return;
-  }
-
-  win.document.write(html);
-  win.document.close();
-
-  // Esperar a que cargue y lanzar impresión automáticamente
-  win.onload = () => {
-    setTimeout(() => {
-      win.focus();
-      win.print();
-      st.innerHTML = `<span style="color:var(--green)">✓ Diálogo de impresión abierto (${datosCliente.length.toLocaleString('es-ES')} registros).</span>`;
-    }, 300);
-  };
-
-  // Fallback si onload no se dispara
-  setTimeout(() => {
-    if (!win.closed) {
-      win.focus();
-      win.print();
-      st.innerHTML = `<span style="color:var(--green)">✓ Diálogo de impresión abierto (${datosCliente.length.toLocaleString('es-ES')} registros).</span>`;
-    }
-  }, 800);
 }
 
 function buildClientReport(filters) {
@@ -3873,110 +3745,68 @@ function buildClientReport(filters) {
   const refs  = new Set(rows.map(r=>r.producto)).size;
   const ticket= rows.length ? total/rows.length : 0;
 
-  // Monthly breakdown
+  // Monthly
   const monthly = [];
   for (let y=y0; y<=y1; y++) {
-    const idx0 = mesIdx(m0), idx1 = mesIdx(m1);
-    const ms = (y===y0&&y===y1) ? MESES_ORD.slice(idx0, idx1+1)
-      : y===y0 ? MESES_ORD.slice(idx0)
-      : y===y1 ? MESES_ORD.slice(0, idx1+1)
+    const ms = (y===y0&&y===y1) ? MESES_ORD.slice(MESES_ORD.indexOf(m0),MESES_ORD.indexOf(m1)+1)
+      : y===y0 ? MESES_ORD.slice(MESES_ORD.indexOf(m0))
+      : y===y1 ? MESES_ORD.slice(0,MESES_ORD.indexOf(m1)+1)
       : MESES_ORD;
-    ms.forEach(m => {
-      const mr = rows.filter(r=>r.año===y && normMes(r.mes)===normMes(m));
-      if (mr.length) monthly.push({
-        label: `${MESES_C[MESES_ORD.indexOf(m)]} ${y}`,
-        imp:   sumI(mr),
-        uds:   mr.reduce((s,r)=>s+(r.unidades||0),0)
-      });
+    ms.forEach(m=>{
+      const mr=rows.filter(r=>r.año===y&&r.mes===m);
+      if(mr.length) monthly.push({label:`${MESES_C[MESES_ORD.indexOf(m)]} ${y}`,imp:sumI(mr),uds:mr.reduce((s,r)=>s+(r.unidades||0),0)});
     });
   }
 
-  // Top 20 products
-  const pm = {};
-  rows.forEach(r=>{
-    if(!pm[r.producto]) pm[r.producto]={imp:0,uds:0};
-    pm[r.producto].imp += r.importe||0;
-    pm[r.producto].uds += r.unidades||0;
-  });
-  const topProds = Object.entries(pm)
-    .map(([p,v])=>({p,...v}))
-    .sort((a,b)=>b.imp-a.imp)
-    .slice(0,20);
+  // Top 20
+  const pm={};
+  rows.forEach(r=>{if(!pm[r.producto])pm[r.producto]={imp:0,uds:0};pm[r.producto].imp+=r.importe||0;pm[r.producto].uds+=r.unidades||0;});
+  const topProds=Object.entries(pm).map(([p,v])=>({p,...v})).sort((a,b)=>b.imp-a.imp).slice(0,20);
 
-  // Comparison with previous equivalent period (same months, previous year)
-  let comp = null;
-  if (y0===y1) {
-    const pr = filterRowsForReport(cliente, y0-1, m0, y1-1, m1);
-    if (pr.length) {
-      const pt = sumI(pr), pu = pr.reduce((s,r)=>s+(r.unidades||0),0);
-      const ml = m0.charAt(0).toUpperCase()+m0.slice(1);
-      const mr2 = m1.charAt(0).toUpperCase()+m1.slice(1);
-      comp = {
-        prevLabel: `${ml}–${mr2} ${y0-1}`,
-        currLabel: `${ml}–${mr2} ${y0}`,
-        prevTotal: pt, currTotal: total,
-        difI: total-pt,
-        pct:  pt ? ((total-pt)/pt*100) : 0,
-        prevUds: pu, currUds: uds, difU: uds-pu
-      };
+  // Comp
+  let comp=null;
+  if(y0===y1){
+    const pr=filterRowsForReport(cliente,y0-1,m0,y1-1,m1);
+    if(pr.length){
+      const pt=sumI(pr),pu=pr.reduce((s,r)=>s+(r.unidades||0),0);
+      comp={prevLabel:`${m0.charAt(0).toUpperCase()+m0.slice(1)}–${m1.charAt(0).toUpperCase()+m1.slice(1)} ${y0-1}`,
+        currLabel:`${m0.charAt(0).toUpperCase()+m0.slice(1)}–${m1.charAt(0).toUpperCase()+m1.slice(1)} ${y0}`,
+        prevTotal:pt,currTotal:total,difI:total-pt,pct:pt?((total-pt)/pt*100):0,prevUds:pu,currUds:uds,difU:uds-pu};
     }
   }
 
-  const ml  = m0.charAt(0).toUpperCase()+m0.slice(1);
-  const mr2 = m1.charAt(0).toUpperCase()+m1.slice(1);
-  const periodLabel = y0===y1 ? `${ml}–${mr2} ${y0}` : `${ml} ${y0} – ${mr2} ${y1}`;
-
-  return {
-    meta: {
-      cliente, periodLabel,
-      generated: new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})
-    },
-    kpis: { total, uds, refs, ticket },
-    monthly, topProds, comp
-  };
+  const ml=m0.charAt(0).toUpperCase()+m0.slice(1), mr2=m1.charAt(0).toUpperCase()+m1.slice(1);
+  const periodLabel=y0===y1?`${ml}–${mr2} ${y0}`:`${ml} ${y0} – ${mr2} ${y1}`;
+  return {meta:{cliente,periodLabel,generated:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})},
+    kpis:{total,uds,refs,ticket},monthly,topProds,comp};
 }
 
 function updatePdfPreview() {
-  const f  = getPdfFilters();
-  const el = document.getElementById('inf-pdf-preview');
-  if (!f.cliente) {
-    el.innerHTML = 'Selecciona un cliente para ver el resumen.';
-    return;
-  }
-  if (!f.y0 || !f.y1) { el.innerHTML = 'Selecciona el periodo.'; return; }
-  const rows = filterRowsForReport(f.cliente, f.y0, f.m0, f.y1, f.m1);
-  if (!rows.length) {
-    el.innerHTML = `<span style="color:var(--red)">Sin datos para <strong>${f.cliente}</strong> en el periodo seleccionado.</span>`;
-    return;
-  }
-  const r = buildClientReport(f);
-  el.innerHTML = `<strong>${r.meta.cliente}</strong><br>
-    Periodo: ${r.meta.periodLabel}<br>
-    Facturación: <strong>${fmt(r.kpis.total)}</strong> ·
-    Unidades: ${fmtN(r.kpis.uds)} ·
-    Referencias: ${r.kpis.refs} ·
-    ${rows.length} registros
-    ${r.comp ? `<br><span style="color:var(--green)">✓ Comparativa disponible vs ${r.comp.prevLabel}</span>` : ''}`;
+  const f=getPdfFilters();
+  const el=document.getElementById('inf-pdf-preview');
+  if(!f.cliente){el.innerHTML='Selecciona un cliente para ver el resumen.';return;}
+  const r=buildClientReport(f);
+  el.innerHTML=`<strong>${r.meta.cliente}</strong><br>Periodo: ${r.meta.periodLabel}<br>
+    Facturación: <strong>${fmt(r.kpis.total)}</strong> · Unidades: ${fmtN(r.kpis.uds)} · Referencias: ${r.kpis.refs}
+    ${r.comp?`<br>Comparativa disponible vs ${r.comp.prevLabel}`:''}`;
 }
 
 function previewClientReport() {
-  const f  = getPdfFilters();
-  const st = document.getElementById('inf-pdf-status');
-  if (!f.cliente) {
-    st.innerHTML = '<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';
-    return;
-  }
-  const rows = filterRowsForReport(f.cliente, f.y0, f.m0, f.y1, f.m1);
-  if (!rows.length) {
-    st.innerHTML = '<span style="color:var(--red)">⚠ Sin datos para el cliente y periodo seleccionados.</span>';
-    return;
-  }
-  const win = window.open('','_blank','width=920,height=700');
-  if (!win) { st.innerHTML='<span style="color:var(--orange)">⚠ El navegador bloqueó la ventana emergente. Permite popups para este fichero.</span>'; return; }
+  const f=getPdfFilters();
+  if(!f.cliente){document.getElementById('inf-pdf-status').innerHTML='<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';return;}
+  const win=window.open('','_blank','width=920,height=700');
   win.document.write(buildPdfHtml(buildClientReport(f)));
-  win.document.close();
-  win.focus();
-  st.innerHTML = '<span style="color:var(--green)">✓ Vista previa abierta.</span>';
+  win.document.close(); win.focus();
+}
+
+function generateClientPDF() {
+  const f=getPdfFilters();
+  const st=document.getElementById('inf-pdf-status');
+  if(!f.cliente){st.innerHTML='<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';return;}
+  const area=document.getElementById('pdf-print-area');
+  area.innerHTML=buildPdfHtml(buildClientReport(f),true);
+  st.innerHTML='<span class="loader"></span> Abriendo impresión…';
+  setTimeout(()=>{window.print();st.innerHTML='<span style="color:var(--green)">✓ Diálogo de impresión abierto.</span>';},200);
 }
 
 function buildPdfHtml(r,inline=false){
@@ -4095,7 +3925,7 @@ function generateDashboardExcel(){
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
-renderLoginScreen();
+(async () => { await renderLoginScreen(); })();
 </script>
 <!-- Hidden PDF print area — only visible during window.print() -->
 <div id="pdf-print-area"></div>
