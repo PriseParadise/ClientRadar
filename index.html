@@ -1225,6 +1225,9 @@ let currentUser = null; // {id, name, color}
 let DB = [];
 let importHistory = [];
 let currentYear = 'todos';
+let supaSession = null;
+let isAdmin = false;
+let impersonatingId = null;
 let charts = {};
 
 // ── SUPABASE ───────────────────────────────────────────────────────────────
