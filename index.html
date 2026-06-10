@@ -80,7 +80,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 #file-input{display:none;}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
 .card-title{font-size:10.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
 .kpi-val{font-size:23px;font-weight:600;color:var(--text);letter-spacing:-.5px;font-family:var(--mono);}
 .kpi-sub{font-size:11px;color:var(--text3);margin-top:3px;}
 .kpi-badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;margin-top:5px;}
@@ -172,7 +172,7 @@ tbody tr:last-child td{border-bottom:none;}
 
 
 /* ── SEARCHABLE CLIENT DROPDOWN ── */
-.cl-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.cl-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;overflow:visible;}
 .cl-year-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;}
 
 /* Period group: badge + year + month-start → month-end */
@@ -417,6 +417,51 @@ tbody tr:last-child td{border-bottom:none;}
   --col-gap:     14px;
   --touch-min:   44px;
 }
+
+
+/* ── DASHBOARD NUEVO ─────────────────────────────────────────────────── */
+.dash-kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:4px;}
+.dash-kpi-alert{border-color:rgba(240,79,90,.25);background:rgba(240,79,90,.04);}
+.dash-kpi-opp{border-color:rgba(52,199,123,.25);background:rgba(52,199,123,.04);}
+.dkc-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);}
+.dkc-val{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--text);line-height:1.1;}
+.dkc-sub{font-size:12px;color:var(--text3);}
+.dash-top-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);}
+.dash-top-row:last-child{border-bottom:none;}
+.dash-top-name{flex:0 0 140px;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-top-bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.dash-top-bar{height:6px;background:rgba(79,124,255,.6);border-radius:3px;transition:width .3s;}
+.dash-top-val{flex:0 0 64px;text-align:right;font-size:12px;font-family:var(--mono);color:var(--text2);}
+.dash-section-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
+
+/* ── QUÉ VENDER HOY ──────────────────────────────────────────────────── */
+.qv-card{background:var(--bg2);border:2px solid rgba(79,124,255,.35);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.qv-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(79,124,255,.07);border-bottom:1px solid rgba(79,124,255,.15);}
+.qv-title{font-size:14px;font-weight:700;color:var(--text);}
+.qv-pot{font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);}
+.qv-list{display:flex;flex-direction:column;padding:4px 0;}
+.qv-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.qv-item:last-child{border-bottom:none;}
+.qv-dot{font-size:15px;flex-shrink:0;line-height:1.4;}
+.qv-info{flex:1;}
+.qv-ref{font-size:13px;font-weight:600;color:var(--text);}
+.qv-reason{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* ── BLOQUES VISITA ─────────────────────────────────────────────────── */
+.vb-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);}
+.vb-row:last-child{border-bottom:none;}
+.vb-semaf{flex-shrink:0;width:10px;height:10px;border-radius:50%;}
+.vb-rank{flex-shrink:0;width:34px;font-family:var(--mono);font-size:12px;font-weight:700;}
+.vb-name{flex:1;font-size:13px;color:var(--text);font-weight:500;}
+.vb-meta{flex-shrink:0;font-size:11px;color:var(--text3);text-align:right;max-width:140px;}
+.vb-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.vb-uds{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);}
+.vb-imp{font-size:12px;font-weight:600;font-family:var(--mono);color:var(--text2);}
+.vb-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.vb-pct-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.vb-pct-bar{height:5px;background:var(--accent);border-radius:3px;max-width:80px;}
+.vb-pct-lbl{font-size:11px;font-family:var(--mono);color:var(--text3);}
+.visita-empty-block{padding:16px;text-align:center;font-size:13px;color:var(--text3);}
 
 /* ── BOTTOM NAV — hidden on desktop, shown on mobile ──────────────────── */
 .bottom-nav {
@@ -789,14 +834,22 @@ tbody tr:last-child td{border-bottom:none;}
       <!-- DASHBOARD -->
       <div id="panel-dashboard" class="panel active">
         <div class="kpi-grid" id="kpi-grid"></div>
-        <div class="grid2">
-          <div class="card"><div class="card-title">Evolución mensual (€)</div><div style="height:195px"><canvas id="c-lineas"></canvas></div></div>
-          <div class="card"><div class="card-title">Top clientes</div><div style="height:195px"><canvas id="c-clientes"></canvas></div></div>
+        <div class="card" id="dash-chart-wrap" style="padding:16px 18px;margin-bottom:14px">
+          <div class="dash-section-title" style="margin-top:0">Ventas por año</div>
+          <div style="height:160px;position:relative"><canvas id="dash-chart"></canvas></div>
         </div>
-        <div class="grid2">
-          <div class="card"><div class="card-title">Top productos</div><div style="height:195px"><canvas id="c-productos"></canvas></div></div>
-          <div class="card"><div class="card-title">Ventas por año</div><div style="height:195px"><canvas id="c-anual"></canvas></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="card" style="padding:14px 16px">
+            <div class="dash-section-title" style="margin-top:0">Top clientes</div>
+            <div id="dash-top5"></div>
+          </div>
+          <div class="card" style="padding:14px 16px">
+            <div class="dash-section-title" style="margin-top:0">Top productos</div>
+            <div id="dash-top5p"></div>
+          </div>
         </div>
+        <!-- hidden canvases para no romper destroyChart refs antiguas -->
+        <div style="display:none"><canvas id="c-lineas"></canvas><canvas id="c-clientes"></canvas><canvas id="c-productos"></canvas><canvas id="c-anual"></canvas></div>
       </div>
 
       <!-- CLIENTES -->
@@ -1557,7 +1610,7 @@ function goTo(id, el) {
   const titles={dashboard:'Dashboard',clientes:'Ficha de Cliente',alertas:'Alertas Comerciales',datos:'Registros',importar:'Importar Excel',visita:'Preparación de Visita Comercial',informes:'Informes'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='dashboard') renderDashboard();
-  if(id==='clientes') renderSelectores();
+  if(id==='clientes') renderClientSearch();
   if(id==='alertas') renderAlertas();
   if(id==='datos') renderTabla();
   if(id==='importar') renderHistory();
@@ -2384,67 +2437,126 @@ const cDefaults={responsive:true,maintainAspectRatio:false,
 function renderDashboard(){
   if(!DB.length)return;
   const data=filtered(),años=getYears();
-  const totalV=sumI(data),totalU=data.reduce((s,r)=>s+(r.unidades||0),0);
-  const nCl=new Set(data.map(r=>r.cliente)).size,nRef=new Set(data.map(r=>r.producto)).size;
-  let badge='';
+  const totalV=sumI(data);
+  const nCl=new Set(data.map(r=>r.cliente)).size;
+  const nRef=new Set(data.map(r=>r.producto)).size;
+
+  // Variación vs año anterior
+  let varBadge='', varNum=null;
   if(currentYear!=='todos'&&años.includes(currentYear-1)){
     const prev=sumI(DB.filter(r=>r.año===currentYear-1));
-    const p=((totalV-prev)/prev*100).toFixed(1);
-    badge=`<span class="kpi-badge ${p>=0?'up':'down'}">${p>=0?'+':''}${p}% vs ${currentYear-1}</span>`;
+    varNum=prev>0?((totalV-prev)/prev*100):null;
   }
+
+  // Clientes en riesgo (caída > 20%)
+  let clientesRiesgo=0, oportunidades=0;
+  if(años.length>=2){
+    const añoA=Math.max(...años), añoB=añoA-1;
+    const meses=getMesesImportados(añoA);
+    const clientesSet=new Set([
+      ...DB.filter(r=>r.año===añoA&&meses.includes(r.mes)).map(r=>r.cliente),
+      ...DB.filter(r=>r.año===añoB&&meses.includes(r.mes)).map(r=>r.cliente)
+    ]);
+    for(const cl of clientesSet){
+      const impA=sumaCliente(cl,añoA,meses,'importe');
+      const impB=sumaCliente(cl,añoB,meses,'importe');
+      if(impB>0&&impA===0) clientesRiesgo++;
+      else if(impB>0&&(impA-impB)/impB*100<-20) clientesRiesgo++;
+      else if(impB>0&&(impA-impB)/impB*100>10) oportunidades++;
+    }
+  }
+
+  const varColor = varNum===null?'var(--text3)':varNum>=0?'var(--green)':'var(--red)';
+  const varIcon  = varNum===null?'':varNum>=0?'↑':'↓';
+  const varTxt   = varNum===null?'—':`${varIcon}${Math.abs(varNum).toFixed(1)}% vs ${currentYear-1}`;
+
   document.getElementById('kpi-grid').innerHTML=`
-    <div class="card"><div class="card-title">Ventas totales</div><div class="kpi-val">${fmtK(totalV)} €</div>${badge}<div class="kpi-sub">${currentYear==='todos'?años.join('–'):currentYear}</div></div>
-    <div class="card"><div class="card-title">Unidades</div><div class="kpi-val">${fmtK(totalU)}</div><div class="kpi-sub">despachadas</div></div>
-    <div class="card"><div class="card-title">Clientes activos</div><div class="kpi-val">${nCl}</div><div class="kpi-sub">con pedidos</div></div>
-    <div class="card"><div class="card-title">Referencias</div><div class="kpi-val">${nRef}</div><div class="kpi-sub">productos distintos</div></div>`;
-  const añosMostrar=currentYear==='todos'?años:[currentYear];
-  destroyChart('c-lineas');
-  charts['c-lineas']=new Chart(document.getElementById('c-lineas'),{type:'line',
-    data:{labels:MESES_C,datasets:añosMostrar.map((a,i)=>({
-      label:String(a),borderColor:PAL[i],backgroundColor:PAL[i]+'18',borderWidth:2,tension:.35,
-      pointRadius:2,fill:añosMostrar.length===1,spanGaps:false,
-      data:MESES_ORD.map(m=>{const v=sumI(DB.filter(r=>r.año===a&&r.mes===m));return v>0?v:null;})
-    }))},
-    options:{...cDefaults,plugins:{legend:{display:añosMostrar.length>1,labels:{font:{size:10},color:'#8b8fa8',boxWidth:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}
-  });
-  const topCl=Object.entries(groupBy(data,'cliente')).map(([k,v])=>({k,v:sumI(v)})).sort((a,b)=>b.v-a.v).slice(0,8);
-  destroyChart('c-clientes');
-  charts['c-clientes']=new Chart(document.getElementById('c-clientes'),{type:'bar',
-    data:{labels:topCl.map(d=>d.k.length>20?d.k.slice(0,19)+'…':d.k),datasets:[{data:topCl.map(d=>d.v),backgroundColor:topCl.map((_,i)=>PAL[i]+'cc'),borderRadius:4}]},
-    options:{...cDefaults,indexAxis:'y',scales:{x:{...cDefaults.scales.x,ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)}},y:{ticks:{color:'#8b8fa8',font:{size:10}}}}}
-  });
-  const topPr=Object.entries(groupBy(data,'producto')).map(([k,v])=>({k,v:sumI(v)})).sort((a,b)=>b.v-a.v).slice(0,8);
-  destroyChart('c-productos');
-  charts['c-productos']=new Chart(document.getElementById('c-productos'),{type:'bar',
-    data:{labels:topPr.map(d=>d.k.length>22?d.k.slice(0,21)+'…':d.k),datasets:[{data:topPr.map(d=>d.v),backgroundColor:topPr.map((_,i)=>PAL[(i+4)%PAL.length]+'cc'),borderRadius:4}]},
-    options:{...cDefaults,indexAxis:'y',scales:{x:{...cDefaults.scales.x,ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)}},y:{ticks:{color:'#8b8fa8',font:{size:10}}}}}
-  });
-  const anual=años.map(a=>({a,v:sumI(DB.filter(r=>r.año===a))}));
-  destroyChart('c-anual');
-  charts['c-anual']=new Chart(document.getElementById('c-anual'),{type:'bar',
-    data:{labels:anual.map(d=>String(d.a)),datasets:[{data:anual.map(d=>d.v),backgroundColor:anual.map((_,i)=>PAL[i]+'cc'),borderRadius:6}]},
-    options:{...cDefaults,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.y)}`}}},
-      scales:{x:{ticks:{color:'#5a5e76',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#5a5e76',font:{size:10},callback:v=>fmtK(v)+'€'},grid:{color:'#2a2d3e'}}}}
-  });
+    <div class="dash-kpi-card">
+      <div class="dkc-label">Ventas YTD</div>
+      <div class="dkc-val">${fmtK(totalV)} €</div>
+      <div class="dkc-sub" style="color:${varColor};font-weight:600">${varTxt}</div>
+    </div>
+    <div class="dash-kpi-card">
+      <div class="dkc-label">Clientes activos</div>
+      <div class="dkc-val">${nCl}</div>
+      <div class="dkc-sub">${nRef} referencias</div>
+    </div>
+    <div class="dash-kpi-card dash-kpi-alert">
+      <div class="dkc-label">⚠ En riesgo</div>
+      <div class="dkc-val" style="color:var(--red)">${clientesRiesgo}</div>
+      <div class="dkc-sub">clientes con caída &gt;20%</div>
+    </div>
+    <div class="dash-kpi-card dash-kpi-opp">
+      <div class="dkc-label">🟢 Oportunidades</div>
+      <div class="dkc-val" style="color:var(--green)">${oportunidades}</div>
+      <div class="dkc-sub">clientes en crecimiento</div>
+    </div>`;
+
+  // Gráfico de barras por año (simplificado — solo si hay varios años)
+  const chartEl=document.getElementById('dash-chart');
+  if(chartEl){
+    if(años.length>1){
+      const byAño=años.map(y=>({y,v:sumI(DB.filter(r=>r.año===y))}));
+      destroyChart('dash');
+      const ctx=chartEl.getContext('2d');
+      charts['dash']=new Chart(ctx,{
+        type:'bar',
+        data:{
+          labels:byAño.map(a=>a.y),
+          datasets:[{
+            data:byAño.map(a=>a.v),
+            backgroundColor:byAño.map((_,i)=>i===byAño.length-1?'rgba(79,124,255,0.85)':'rgba(79,124,255,0.3)'),
+            borderRadius:4, borderSkipped:false
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+' €'}}},
+          scales:{
+            x:{grid:{display:false},ticks:{color:'var(--text3)',font:{size:11}}},
+            y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'var(--text3)',font:{size:10},callback:v=>fmtK(v)+' €'}}
+          }
+        }
+      });
+      chartEl.parentElement.style.display='block';
+    } else {
+      chartEl.parentElement.style.display='none';
+    }
+  }
+
+  // Top 5 clientes
+  const porCliente=groupBy(data,'cliente');
+  const top5=Object.entries(porCliente)
+    .map(([cl,rows])=>({cl,v:sumI(rows)}))
+    .sort((a,b)=>b.v-a.v).slice(0,5);
+  const topMax=top5[0]?.v||1;
+  const top5El=document.getElementById('dash-top5');
+  if(top5El) top5El.innerHTML=top5.map(c=>`
+    <div class="dash-top-row">
+      <div class="dash-top-name">${c.cl}</div>
+      <div class="dash-top-bar-wrap">
+        <div class="dash-top-bar" style="width:${(c.v/topMax*100).toFixed(0)}%"></div>
+      </div>
+      <div class="dash-top-val">${fmtK(c.v)} €</div>
+    </div>`).join('');
+
+  // Top 5 productos
+  const porProd=groupBy(data,'producto');
+  const top5p=Object.entries(porProd)
+    .map(([p,rows])=>({p,v:sumI(rows)}))
+    .sort((a,b)=>b.v-a.v).slice(0,5);
+  const topMaxP=top5p[0]?.v||1;
+  const top5pEl=document.getElementById('dash-top5p');
+  if(top5pEl) top5pEl.innerHTML=top5p.map(c=>`
+    <div class="dash-top-row">
+      <div class="dash-top-name">${c.p}</div>
+      <div class="dash-top-bar-wrap">
+        <div class="dash-top-bar" style="width:${(c.v/topMaxP*100).toFixed(0)}%;background:rgba(52,199,123,0.7)"></div>
+      </div>
+      <div class="dash-top-val">${fmtK(c.v)} €</div>
+    </div>`).join('');
 }
 
-// ── CLIENTES ───────────────────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════
-// SEARCHABLE CLIENT DROPDOWN — v2
-// API pública: renderClientSearch() · filterClients() · selectClient(name)
-//              closeClientDropdown() · clearClientSearch()
-// ═══════════════════════════════════════════════════════════════════════════
-
-/** Nombre del cliente actualmente seleccionado (fuente de verdad) */
-let selectedClientName = '';
-/** Índice de opción con foco de teclado en el dropdown */
-let csFocusIdx = -1;
-
-/**
- * Construye el objeto de metadatos de cada cliente una sola vez.
- * Devuelve array ordenado por facturación descendente.
- * @returns {{ name: string, revenue: number, lastYear: number }[]}
- */
 function buildClientIndex() {
   const map = {};
   DB.forEach(r => {
@@ -2481,6 +2593,9 @@ function openClientDropdown() {
   const drop = document.getElementById('cs-dropdown');
   wrap.classList.add('open');
   drop.style.display = 'block';
+  // Asegurar que el scroll container no corta el dropdown
+  const mainEl = document.querySelector('.main');
+  if(mainEl) mainEl.style.overflow = 'visible';
   document.getElementById('cs-input').focus();
   filterClients();       // renderiza la lista con el texto actual
   csFocusIdx = -1;
@@ -2493,6 +2608,8 @@ function closeClientDropdown() {
   document.getElementById('cs-wrap').classList.remove('open');
   document.getElementById('cs-dropdown').style.display = 'none';
   csFocusIdx = -1;
+  const mainEl = document.querySelector('.main');
+  if(mainEl) mainEl.style.overflow = '';
 }
 
 /**
@@ -2899,7 +3016,21 @@ function renderCliente() {
   }).join('');
 
   // ── Render ───────────────────────────────────────────────────────────────
+  // ── "Qué vender hoy" mini-card en sección cliente ───────────────────
+  const _comprados = new Set(rowsAll.map(r => r.producto));
+  const _top20g = topProductosGlobal(20);
+  const _topNoBuy = _top20g.filter(p => !_comprados.has(p.producto)).slice(0, 4);
+  const _perdCl = calcPerdidasRef(rowsAll).slice(0, 3);
+  const _crossCl = calcCrossSelling(rowsAll, selectedClientName).slice(0, 2);
+  const _qvItems = [
+    ..._topNoBuy.map((p,i)=>`<div class="qv-item"><span class="qv-dot">${i<2?'🔴':'🟠'}</span><div class="qv-info"><div class="qv-ref">${p.producto}</div><div class="qv-reason">Top ${p.rank||_top20g.indexOf(p)+1} empresa · no lo compra</div></div></div>`),
+    ..._perdCl.map(p=>`<div class="qv-item"><span class="qv-dot">🟠</span><div class="qv-info"><div class="qv-ref">${p.prod}</div><div class="qv-reason">Lo compraba · sin actividad ${p.periodo}</div></div></div>`),
+    ..._crossCl.map(c=>`<div class="qv-item"><span class="qv-dot">🟢</span><div class="qv-info"><div class="qv-ref">${c.prod}</div><div class="qv-reason">${c.pctClientes}% de clientes similares la compran</div></div></div>`),
+  ];
+  const _qvCard = _qvItems.length ? `<div class="qv-card" style="margin-bottom:14px"><div class="qv-header"><span class="qv-title">🎯 Qué vender hoy</span></div><div class="qv-list">${_qvItems.join('')}</div></div>` : '';
+
   cont.innerHTML = `
+    ${_qvCard}
     ${tramoBanner}
     ${kpiHTML}
     ${bannerHTML}
@@ -3127,6 +3258,9 @@ function renderAlertas() {
     syncAlertBadge();
     return;
   }
+
+  // Ocultar oportunidades del módulo alertas (están en Prep. Visita)
+  raw.opp = [];
 
   // Show filters
   if (filEl) filEl.style.display = 'flex';
@@ -3431,7 +3565,8 @@ function topProductosGlobal(n = 20) {
   const map = {};
   DB.forEach(r => { map[r.producto] = (map[r.producto] || 0) + (r.importe || 0); });
   return Object.entries(map).map(([k, v]) => ({ producto: k, importe: v }))
-    .sort((a, b) => b.importe - a.importe).slice(0, n);
+    .sort((a, b) => b.importe - a.importe).slice(0, n)
+    .map((p, i) => ({ ...p, rank: i + 1 }));
 }
 
 /** Filas de los últimos 12 meses para un cliente */
@@ -3550,7 +3685,8 @@ function calcPerdidasRef(clienteRows) {
 /**
  * Venta cruzada inteligente: clientes con facturación similar (±40%) que compran productos que este cliente no compra.
  */
-function calcCrossSelling(clienteRows) {
+function calcCrossSelling(clienteRows, nombreCliente) {
+  const _cliente = nombreCliente || visitaCliente;
   const comprados = new Set(clienteRows.map(r => r.producto));
   const miTotal   = sumI(clienteRows);
   const margen    = 0.4;
@@ -3559,7 +3695,7 @@ function calcCrossSelling(clienteRows) {
   const porCliente = groupBy(DB, 'cliente');
   const similares  = Object.entries(porCliente)
     .map(([cl, rows]) => ({ cl, total: sumI(rows) }))
-    .filter(c => c.cl !== visitaCliente &&
+    .filter(c => c.cl !== _cliente &&
       c.total >= miTotal * (1 - margen) &&
       c.total <= miTotal * (1 + margen))
     .map(c => c.cl);
@@ -3627,7 +3763,6 @@ function renderVisita() {
   const cont = document.getElementById('visita-view');
   cont.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3)"><span class="loader"></span> Analizando cliente…</div>';
 
-  // Async para no bloquear el render del loader
   setTimeout(() => {
     const clienteRows = DB.filter(r => r.cliente === visitaCliente);
     if (!clienteRows.length) {
@@ -3639,7 +3774,6 @@ function renderVisita() {
     const imp12     = sumI(rows12);
     const impTotal  = sumI(clienteRows);
     const refs12    = new Set(rows12.map(r => r.producto)).size;
-    const refsTotal = new Set(clienteRows.map(r => r.producto)).size;
     const lastBuy   = (() => {
       let best = null;
       clienteRows.forEach(r => {
@@ -3649,177 +3783,139 @@ function renderVisita() {
       return best?.label || '—';
     })();
 
-    // Calcular todos los módulos
-    const reposicion  = calcReposicion(clienteRows, rows12);
-    const roturas     = calcRotura(clienteRows);
+    // Calcular módulos
     const { top10missing, top20missing } = calcTopOportunidades(clienteRows);
+    const reposicion  = calcReposicion(clienteRows, rows12);
     const perdidas    = calcPerdidasRef(clienteRows);
     const crossSell   = calcCrossSelling(clienteRows);
 
-    // Potenciales estimados
-    const potReposicion = reposicion.reduce((s, r) => s + r.imp12 / 12 * r.meses, 0);
-    const potTop10      = top10missing.reduce((s, p) => s + p.importe * 0.02, 0); // 2% del global como proxy
-    const potTop20      = top20missing.reduce((s, p) => s + p.importe * 0.015, 0);
-    const potPerdidas   = perdidas.reduce((s, p) => s + p.imp * 0.3, 0); // 30% recuperación
-    const potCross      = crossSell.reduce((s, c) => s + c.impMedioSimilar * 0.5, 0);
-    const potTotal      = potReposicion + potTop10 + potTop20 + potPerdidas + potCross;
+    // Potenciales
+    const potTop      = [...top10missing,...top20missing].reduce((s,p)=>s+p.importe*0.02,0);
+    const potPerdidas = perdidas.reduce((s,p)=>s+p.imp*0.3,0);
+    const potCross    = crossSell.reduce((s,c)=>s+c.impMedioSimilar*0.5,0);
+    const potRepos    = reposicion.reduce((s,r)=>s+r.imp12/12*r.meses,0);
+    const potTotal    = potTop + potPerdidas + potCross + potRepos;
 
-    // ── Resumen del cliente ────────────────────────────────────────────────
-    const resumenHTML = `
-      <div class="visita-resumen">
-        <div class="vr-kpi"><div class="vr-kpi-label">Facturación 12m</div><div class="vr-kpi-val">${fmtK(imp12)} €</div><div class="vr-kpi-sub">Total: ${fmtK(impTotal)} €</div></div>
-        <div class="vr-kpi"><div class="vr-kpi-label">Refs activas (12m)</div><div class="vr-kpi-val">${refs12}</div><div class="vr-kpi-sub">Históricas: ${refsTotal}</div></div>
-        <div class="vr-kpi"><div class="vr-kpi-label">Última compra</div><div class="vr-kpi-val" style="font-size:15px">${lastBuy}</div></div>
-        <div class="vr-kpi" style="border-color:rgba(79,124,255,.3);background:rgba(79,124,255,.05)"><div class="vr-kpi-label">Potencial visita</div><div class="vr-kpi-val" style="color:var(--accent)">+${fmtK(potTotal)} €</div><div class="vr-kpi-sub">estimado</div></div>
-      </div>`;
-
-    // ── Reposición ─────────────────────────────────────────────────────────
-    const reposHTML = `<table class="visita-table">
-      <thead><tr><th>Referencia</th><th>Venta 12m</th><th>Últ. compra</th><th>Meses</th><th class="vtd-r">Uds rec.</th><th>Prioridad</th></tr></thead>
-      <tbody>${reposicion.slice(0, 20).map(r => `<tr>
-        <td>${r.prod}</td>
-        <td class="vtd-r">${fmt(r.imp12)}</td>
-        <td>${r.last.label}</td>
-        <td class="vtd-c">${r.meses}</td>
-        <td class="vtd-r" style="font-weight:600">${r.cantRec}</td>
-        <td><span class="pri-badge ${r.prioridad}">${r.priLabel}</span></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-
-    // ── Rotura ─────────────────────────────────────────────────────────────
-    const roturaHTML = `<table class="visita-table">
-      <thead><tr><th>Referencia</th><th>Últ. compra</th><th class="vtd-c">Meses</th><th class="vtd-c">Ciclo medio</th><th>Riesgo</th><th class="vtd-r">Uds sugeridas</th></tr></thead>
-      <tbody>${roturas.map(r => `<tr>
-        <td>${r.prod}</td>
-        <td>${r.last.label}</td>
-        <td class="vtd-c">${r.elapsed}</td>
-        <td class="vtd-c" style="color:var(--text3)">${r.avgInterval}m</td>
-        <td><span class="pri-badge ${r.riesgo}">${r.riesgoLabel}</span></td>
-        <td class="vtd-r">${r.cantSug}</td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-
-    // ── Top 10 ─────────────────────────────────────────────────────────────
-    const top10HTML = `<table class="visita-table">
-      <thead><tr><th class="vtd-c">#</th><th>Referencia</th><th class="vtd-r">Ventas globales</th><th>Prioridad</th></tr></thead>
-      <tbody>${top10missing.map(p => `<tr>
-        <td class="vtd-c" style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent)">${p.rank}</td>
-        <td>${p.producto}</td>
-        <td class="vtd-r">${fmt(p.importe)}</td>
-        <td><span class="pri-badge red">🔴 Alta</span></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-
-    // ── Top 20 ─────────────────────────────────────────────────────────────
-    const top20HTML = `<table class="visita-table">
-      <thead><tr><th class="vtd-c">#</th><th>Referencia</th><th class="vtd-r">Ventas globales</th><th>Prioridad</th></tr></thead>
-      <tbody>${top20missing.map(p => `<tr>
-        <td class="vtd-c" style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--orange)">${p.rank}</td>
-        <td>${p.producto}</td>
-        <td class="vtd-r">${fmt(p.importe)}</td>
-        <td><span class="pri-badge orange">🟡 Media</span></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-
-    // ── Perdidas ───────────────────────────────────────────────────────────
-    const perdidasHTML = `<table class="visita-table">
-      <thead><tr><th>Referencia</th><th>Última compra</th><th>Sin actividad</th><th class="vtd-r">Uds hist.</th><th class="vtd-r">Imp. hist.</th><th>Prioridad</th></tr></thead>
-      <tbody>${perdidas.slice(0, 15).map(p => `<tr>
-        <td>${p.prod}</td>
-        <td>${p.lastLabel}</td>
-        <td style="color:var(--text3)">${p.periodo}</td>
-        <td class="vtd-r">${fmtN(p.uds)}</td>
-        <td class="vtd-r">${fmt(p.imp)}</td>
-        <td><span class="pri-badge ${p.prioridad}">${p.priLabel}</span></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-
-    // ── Cross-selling ──────────────────────────────────────────────────────
-    const crossHTML = `<table class="visita-table">
-      <thead><tr><th>Referencia</th><th class="vtd-c">% clientes similares</th><th class="vtd-r">Importe medio/cliente</th></tr></thead>
-      <tbody>${crossSell.map(c => `<tr>
-        <td>${c.prod}</td>
-        <td class="vtd-c">
-          <div style="display:flex;align-items:center;gap:6px;justify-content:center">
-            <div style="width:60px;height:5px;background:var(--bg3);border-radius:3px">
-              <div style="width:${c.pctClientes}%;height:5px;background:var(--accent);border-radius:3px"></div>
-            </div>
-            <span style="font-family:var(--mono);font-size:11px">${c.pctClientes}%</span>
+    // ── TARJETA "QUÉ VENDER HOY" ──────────────────────────────────────────
+    const queVenderItems = [
+      ...top10missing.slice(0,3).map(p=>`
+        <div class="qv-item qv-red">
+          <span class="qv-dot">🔴</span>
+          <div class="qv-info">
+            <div class="qv-ref">${p.producto}</div>
+            <div class="qv-reason">Top ${p.rank} empresa · ${fmtK(p.importe)} € ventas globales</div>
           </div>
-        </td>
-        <td class="vtd-r">${fmt(c.impMedioSimilar)}</td>
-      </tr>`).join('')}</tbody>
-    </table>`;
+        </div>`),
+      ...top20missing.slice(0,2).map(p=>`
+        <div class="qv-item qv-orange">
+          <span class="qv-dot">🟠</span>
+          <div class="qv-info">
+            <div class="qv-ref">${p.producto}</div>
+            <div class="qv-reason">Top ${p.rank} empresa · no lo compra</div>
+          </div>
+        </div>`),
+      ...perdidas.slice(0,2).map(p=>`
+        <div class="qv-item qv-orange">
+          <span class="qv-dot">🟠</span>
+          <div class="qv-info">
+            <div class="qv-ref">${p.prod}</div>
+            <div class="qv-reason">Lo compraba · sin actividad ${p.periodo}</div>
+          </div>
+        </div>`),
+      ...crossSell.slice(0,2).map(c=>`
+        <div class="qv-item qv-green">
+          <span class="qv-dot">🟢</span>
+          <div class="qv-info">
+            <div class="qv-ref">${c.prod}</div>
+            <div class="qv-reason">${c.pctClientes}% de clientes similares la compran</div>
+          </div>
+        </div>`),
+    ];
 
-    // ── Plan de visita ─────────────────────────────────────────────────────
-    const planItems = [
-      { title: 'Reponer referencias críticas', desc: `${reposicion.filter(r=>r.prioridad==='red').length} productos con reposición urgente detectada`, amount: `+${fmtK(potReposicion)} € estimados` },
-      { title: 'Revisar productos con riesgo de rotura', desc: `${roturas.filter(r=>r.riesgo==='red').length} referencias en riesgo muy alto`, amount: '' },
-      { title: 'Presentar oportunidades Top 10', desc: `${top10missing.length} referencias líderes que el cliente no compra`, amount: `+${fmtK(potTop10)} € potencial` },
-      { title: 'Presentar oportunidades Top 20', desc: `${top20missing.length} referencias de segunda línea sin explorar`, amount: `+${fmtK(potTop20)} € potencial` },
-      { title: 'Recuperar referencias perdidas', desc: `${perdidas.length} productos sin actividad en más de 12 meses`, amount: `+${fmtK(potPerdidas)} € potencial` },
-      { title: 'Proponer venta cruzada', desc: `${crossSell.length} referencias de clientes similares con alta probabilidad`, amount: `+${fmtK(potCross)} € potencial` },
-    ].filter((_, i) => {
-      const counts = [reposicion.length, roturas.length, top10missing.length, top20missing.length, perdidas.length, crossSell.length];
-      return counts[i] > 0;
-    });
-
-    const planHTML = `<div>${planItems.map((item, i) => `
-      <div class="plan-item">
-        <div class="plan-num">${i + 1}</div>
-        <div class="plan-text">
-          <div class="plan-title">${item.title}</div>
-          <div class="plan-desc">${item.desc}</div>
-          ${item.amount ? `<div class="plan-amount">${item.amount}</div>` : ''}
+    const queVenderHTML = queVenderItems.length ? `
+      <div class="qv-card">
+        <div class="qv-header">
+          <span class="qv-title">🎯 Qué vender hoy</span>
+          <span class="qv-pot">Potencial +${fmtK(potTotal)} €</span>
         </div>
-      </div>`).join('')}</div>`;
+        <div class="qv-list">${queVenderItems.join('')}</div>
+      </div>` : '';
 
-    // ── Resumen ejecutivo ──────────────────────────────────────────────────
-    // Top 3 acciones por potencial económico
-    const oportunidades = [
-      { label: 'Reposición', val: potReposicion },
-      { label: 'Top 10',     val: potTop10 },
-      { label: 'Top 20',     val: potTop20 },
-      { label: 'Recuperación refs', val: potPerdidas },
-      { label: 'Venta cruzada', val: potCross },
-    ].filter(o => o.val > 0).sort((a, b) => b.val - a.val);
-
-    const top3Actions = oportunidades.slice(0, 3);
-
-    const ejecutivoHTML = `
-      <div class="exec-box">
-        <div class="vr-kpi-label">Potencial total detectado en la visita</div>
-        <div class="exec-total">+${fmtK(potTotal)} €</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0 0">
-          ${oportunidades.map(o => `<div style="background:var(--bg3);border-radius:6px;padding:8px 10px">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${o.label}</div>
-            <div style="font-size:14px;font-weight:600;font-family:var(--mono);color:var(--accent)">+${fmtK(o.val)} €</div>
-          </div>`).join('')}
-        </div>
-        <div class="exec-sub">Las 3 acciones prioritarias para esta visita:</div>
-        <div class="exec-actions">
-          ${top3Actions.map(a => `<div class="exec-action"><strong>${a.label}</strong> — potencial +${fmtK(a.val)} €</div>`).join('')}
-        </div>
+    // ── RESUMEN CLIENTE ────────────────────────────────────────────────────
+    const resumenHTML = `
+      <div class="visita-resumen" style="margin-top:12px">
+        <div class="vr-kpi"><div class="vr-kpi-label">Facturación 12m</div><div class="vr-kpi-val">${fmtK(imp12)} €</div><div class="vr-kpi-sub">Total hist.: ${fmtK(impTotal)} €</div></div>
+        <div class="vr-kpi"><div class="vr-kpi-label">Refs activas (12m)</div><div class="vr-kpi-val">${refs12}</div></div>
+        <div class="vr-kpi"><div class="vr-kpi-label">Última compra</div><div class="vr-kpi-val" style="font-size:15px">${lastBuy}</div></div>
       </div>`;
 
-    // ── Montar todo ────────────────────────────────────────────────────────
+    // ── BLOQUE 1: TOP QUE NO COMPRA ────────────────────────────────────────
+    const topNoCompraHTML = (!top10missing.length && !top20missing.length)
+      ? '<div class="visita-empty-block">Este cliente compra todas las referencias top.</div>'
+      : [...top10missing, ...top20missing].slice(0,12).map((p,i) => {
+          const isTop10 = i < top10missing.length;
+          return `<div class="vb-row">
+            <div class="vb-rank" style="color:${isTop10?'var(--red)':'var(--orange)'}">#${p.rank}</div>
+            <div class="vb-name">${p.producto}</div>
+            <div class="vb-meta">${fmtK(p.importe)} € empresa</div>
+            <div class="vb-badge" style="background:${isTop10?'rgba(240,79,90,.12)':'rgba(245,166,35,.12)'};color:${isTop10?'var(--red)':'var(--orange)'}">${isTop10?'Top 10':'Top 20'}</div>
+          </div>`;
+        }).join('');
+
+    // ── BLOQUE 2: COMPRA HABITUAL (reposición) ─────────────────────────────
+    const compraHabHTML = !reposicion.length
+      ? '<div class="visita-empty-block">Sin referencias con histórico suficiente.</div>'
+      : reposicion.slice(0,10).map(r => `
+        <div class="vb-row">
+          <span class="vb-semaf" style="background:${r.prioridad==='red'?'var(--red)':r.prioridad==='orange'?'var(--orange)':'var(--green)'}"></span>
+          <div class="vb-name">${r.prod}</div>
+          <div class="vb-meta">Últ: ${r.last.label} · ${r.meses}m</div>
+          <div class="vb-right">
+            <div class="vb-uds">${r.cantRec} uds</div>
+            <div class="vb-badge" style="background:${r.prioridad==='red'?'rgba(240,79,90,.12)':r.prioridad==='orange'?'rgba(245,166,35,.12)':'rgba(52,199,123,.12)'};color:${r.prioridad==='red'?'var(--red)':r.prioridad==='orange'?'var(--orange)':'var(--green)'}">${r.priLabel}</div>
+          </div>
+        </div>`).join('');
+
+    // ── BLOQUE 3: REFERENCIAS PERDIDAS ────────────────────────────────────
+    const perdidasBHTML = !perdidas.length
+      ? '<div class="visita-empty-block">No se detectan referencias perdidas.</div>'
+      : perdidas.slice(0,10).map(p => `
+        <div class="vb-row">
+          <div class="vb-name">${p.prod}</div>
+          <div class="vb-meta">Última: ${p.lastLabel} · ${p.periodo}</div>
+          <div class="vb-right">
+            <div class="vb-imp">${fmtK(p.imp)} €</div>
+            <div class="vb-badge" style="background:rgba(245,166,35,.12);color:var(--orange)">${p.priLabel}</div>
+          </div>
+        </div>`).join('');
+
+    // ── BLOQUE 4: VENTA CRUZADA ────────────────────────────────────────────
+    const crossBHTML = !crossSell.length
+      ? '<div class="visita-empty-block">No hay clientes similares para comparar.</div>'
+      : crossSell.slice(0,8).map(c => `
+        <div class="vb-row">
+          <div class="vb-name">${c.prod}</div>
+          <div class="vb-meta">${fmtK(c.impMedioSimilar)} € medio/cliente</div>
+          <div class="vb-pct-wrap">
+            <div class="vb-pct-bar" style="width:${c.pctClientes}%"></div>
+            <span class="vb-pct-lbl">${c.pctClientes}%</span>
+          </div>
+        </div>`).join('');
+
+    // ── MONTAR ────────────────────────────────────────────────────────────
     cont.innerHTML = `
       <div style="margin-bottom:6px;font-size:13px;font-weight:500;color:var(--text2)">
-        Informe de visita · <span style="color:var(--text)">${visitaCliente}</span>
+        Prep. Visita · <span style="color:var(--text)">${visitaCliente}</span>
       </div>
+      ${queVenderHTML}
       ${resumenHTML}
-      ${ejecutivoHTML}
-      ${vsecHTML('repos',  '🔄', 'Reposición recomendada',         reposicion.length,    '240,79,90',   reposHTML)}
-      ${vsecHTML('rotura', '⚠',  'Productos con riesgo de rotura', roturas.length,       '245,166,35',  roturaHTML)}
-      ${vsecHTML('top10',  '⭐', 'Oportunidades Top 10',           top10missing.length,  '240,79,90',   top10HTML)}
-      ${vsecHTML('top20',  '◎',  'Oportunidades Top 20',           top20missing.length,  '245,166,35',  top20HTML)}
-      ${vsecHTML('perd',   '↩',  'Referencias perdidas',           perdidas.length,      '245,166,35',  perdidasHTML)}
-      ${vsecHTML('cross',  '⇄',  'Venta cruzada inteligente',      crossSell.length,     '79,124,255',  crossHTML)}
-      ${vsecHTML('plan',   '✓',  'Plan de visita recomendado',     planItems.length,     '52,199,123',  planHTML)}`;
+      ${vsecHTML('topnc',  '⭐', 'Top empresa que no compra',  top10missing.length+top20missing.length, '240,79,90',  topNoCompraHTML)}
+      ${vsecHTML('repos',  '🔄', 'Compra habitual · semáforo',  reposicion.length,   '245,166,35', compraHabHTML)}
+      ${vsecHTML('perd',   '↩',  'Referencias perdidas',        perdidas.length,     '245,166,35', perdidasBHTML)}
+      ${vsecHTML('cross',  '⇄',  'Venta cruzada',               crossSell.length,    '79,124,255', crossBHTML)}`;
 
-  }, 50); // end setTimeout
+  }, 50);
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÓDULO INFORMES — PDF de cliente + Dashboard Excel
@@ -3963,20 +4059,18 @@ function generateClientPDF() {
   const f=getPdfFilters();
   const st=document.getElementById('inf-pdf-status');
   if(!f.cliente){st.innerHTML='<span style="color:var(--orange)">⚠ Selecciona un cliente.</span>';return;}
-  const area=document.getElementById('pdf-print-area');
-  area.innerHTML=buildPdfHtml(buildClientReport(f),true);
-  st.innerHTML='<span class="loader"></span> Abriendo impresión…';
-  // Esperar a que el DOM renderice el contenido antes de imprimir
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      setTimeout(()=>{
-        window.print();
-        st.innerHTML='<span style="color:var(--green)">✓ Diálogo de impresión abierto.</span>';
-        // Limpiar el área después de imprimir
-        setTimeout(()=>{ area.innerHTML=''; },1000);
-      },150);
-    });
-  });
+  st.innerHTML='<span class="loader"></span> Generando informe…';
+  const html=buildPdfHtml(buildClientReport(f),false);
+  const win=window.open('','_blank','width=960,height=800');
+  if(!win){st.innerHTML='<span style="color:var(--orange)">⚠ Permite las ventanas emergentes para generar el PDF.</span>';return;}
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{
+    win.print();
+    st.innerHTML='<span style="color:var(--green)">✓ Diálogo de impresión abierto.</span>';
+  },600);
 }
 
 function buildPdfHtml(r,inline=false){
