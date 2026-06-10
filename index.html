@@ -691,7 +691,7 @@ tbody tr:last-child td{border-bottom:none;}
 
 /* PDF print styles — applied when window.print() is called */
 @media print{
-  body > *{display:none !important;}
+  body > *:not(#pdf-print-area){display:none !important;}
   #pdf-print-area{display:block !important;}
   #pdf-print-area{
     font-family:'DM Sans',sans-serif;font-size:11pt;color:#111;
@@ -3966,7 +3966,17 @@ function generateClientPDF() {
   const area=document.getElementById('pdf-print-area');
   area.innerHTML=buildPdfHtml(buildClientReport(f),true);
   st.innerHTML='<span class="loader"></span> Abriendo impresión…';
-  setTimeout(()=>{window.print();st.innerHTML='<span style="color:var(--green)">✓ Diálogo de impresión abierto.</span>';},200);
+  // Esperar a que el DOM renderice el contenido antes de imprimir
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      setTimeout(()=>{
+        window.print();
+        st.innerHTML='<span style="color:var(--green)">✓ Diálogo de impresión abierto.</span>';
+        // Limpiar el área después de imprimir
+        setTimeout(()=>{ area.innerHTML=''; },1000);
+      },150);
+    });
+  });
 }
 
 function buildPdfHtml(r,inline=false){
