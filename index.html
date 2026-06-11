@@ -434,6 +434,35 @@ tbody tr:last-child td{border-bottom:none;}
 .dash-top-val{flex:0 0 64px;text-align:right;font-size:12px;font-family:var(--mono);color:var(--text2);}
 .dash-section-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
 
+/* ── PRIORIDADES COMERCIALES ─────────────────────────────────────────── */
+.al-pri-badge{font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:.06em;white-space:nowrap;flex-shrink:0;}
+.al-priority-banner{display:flex;align-items:center;justify-content:space-between;background:rgba(240,79,90,.07);border:1.5px solid rgba(240,79,90,.35);border-radius:10px;padding:13px 18px;margin-bottom:14px;}
+.al-pb-left{display:flex;align-items:center;gap:12px;}
+.al-pb-icon{font-size:20px;}
+.al-pb-title{font-size:14px;color:var(--text);font-weight:600;}
+.al-pb-title strong{color:var(--red);font-size:16px;}
+.al-pb-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.al-pb-sub strong{color:var(--red);font-family:var(--mono);}
+
+/* ── BENCHMARK COMERCIAL ─────────────────────────────────────────────── */
+.bmk-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.bmk-header{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.bmk-title{font-size:13px;font-weight:700;color:var(--text);}
+.bmk-seg{font-size:11px;color:var(--text3);}
+.bmk-body{padding:10px 16px 12px;}
+.bmk-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+.bmk-row:last-of-type{border-bottom:none;}
+.bmk-label{font-size:12px;color:var(--text2);}
+.bmk-val{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);}
+.bmk-pctl-wrap{display:flex;align-items:center;gap:10px;}
+.bmk-pctl-bar{width:110px;height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.bmk-pctl-fill{height:7px;background:linear-gradient(90deg,var(--orange),var(--accent));border-radius:4px;}
+.bmk-pctl-num{font-size:11.5px;font-family:var(--mono);font-weight:600;color:var(--text2);white-space:nowrap;}
+.bmk-opp{margin-top:10px;padding:9px 12px;background:rgba(79,124,255,.07);border:1px solid rgba(79,124,255,.2);border-radius:8px;font-size:12px;color:var(--text2);}
+.bmk-opp strong{color:var(--accent);font-family:var(--mono);}
+.bmk-opp-good{background:rgba(52,199,123,.07);border-color:rgba(52,199,123,.2);}
+.bmk-opp-good strong{color:var(--green);}
+
 /* ── QUÉ VENDER HOY ──────────────────────────────────────────────────── */
 .qv-card{background:var(--bg2);border:2px solid rgba(79,124,255,.35);border-radius:12px;overflow:hidden;margin-bottom:14px;}
 .qv-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(79,124,255,.07);border-bottom:1px solid rgba(79,124,255,.15);}
@@ -3031,8 +3060,11 @@ function renderCliente() {
   ];
   const _qvCard = _qvItems.length ? `<div class="qv-card" style="margin-bottom:14px"><div class="qv-header"><span class="qv-title">🎯 Qué vender hoy</span></div><div class="qv-list">${_qvItems.join('')}</div></div>` : '';
 
+  const _bmkCard = benchmarkCardHTML(selectedClientName);
+
   cont.innerHTML = `
     ${_qvCard}
+    ${_bmkCard}
     ${tramoBanner}
     ${kpiHTML}
     ${bannerHTML}
@@ -3136,6 +3168,41 @@ function sumaProducto(cliente, producto, año, meses) {
  *
  * @returns {{ gone, risk, ref, opp, tramo, añoA, añoB, meses }}
  */
+// ── SISTEMA DE PRIORIDADES COMERCIALES ──────────────────────────────────────
+/**
+ * Asigna prioridad comercial a una alerta.
+ * red    = ACTUAR HOY    (perdidos, caídas >50%, alto impacto)
+ * orange = ESTA SEMANA   (caídas moderadas, riesgo creciente)
+ * green  = SEGUIMIENTO   (variaciones pequeñas, referencias)
+ */
+function alertPriority(a) {
+  if (a.type === 'gone') return 'red';
+  if (a.type === 'risk') {
+    const absPct = Math.abs(a.pct || 0);
+    const absDif = Math.abs(a.dif || 0);
+    if (absPct >= 50 || absDif >= 1500) return 'red';
+    if (absPct >= 15 || absDif >= 400)  return 'orange';
+    return 'green';
+  }
+  if (a.type === 'ref') {
+    const lost = Math.abs(a.difU || 0);
+    return lost >= 20 ? 'orange' : 'green';
+  }
+  return 'green';
+}
+const PRIORITY_META = {
+  red:    { label: 'ACTUAR HOY',  color: 'var(--red)',    bg: 'rgba(240,79,90,.16)',  border: 'rgba(240,79,90,.45)' },
+  orange: { label: 'ESTA SEMANA', color: 'var(--orange)', bg: 'rgba(245,166,35,.14)', border: 'rgba(245,166,35,.4)' },
+  green:  { label: 'SEGUIMIENTO', color: 'var(--green)',  bg: 'rgba(52,199,123,.12)', border: 'rgba(52,199,123,.35)' },
+};
+/**
+ * Anualiza un importe de un tramo de N meses a 12 meses.
+ */
+function anualiza(imp, nMeses) {
+  if (!nMeses || nMeses >= 12) return imp;
+  return imp / nMeses * 12;
+}
+
 function calcAlertas() {
   const empty = { gone:[], risk:[], ref:[], opp:[], tramo:'', añoA:null, añoB:null, meses:[] };
   const años  = getYears();
@@ -3215,10 +3282,11 @@ function calcAlertas() {
  * gone siempre pasa (sin umbral).
  */
 function applyAlFilters({ gone, risk, ref, opp }) {
-  const minEuros = parseFloat(document.getElementById('al-min-euros')?.value ?? 100);
-  const minPct   = parseFloat(document.getElementById('al-min-pct')?.value   ?? 15);
-  const minUds   = parseFloat(document.getElementById('al-min-uds')?.value   ?? 6);
-  const minOpp   = parseFloat(document.getElementById('al-min-opp')?.value   ?? 100);
+  const numOr = (v, d) => { const x = parseFloat(v); return isNaN(x) ? d : x; };
+  const minEuros = numOr(document.getElementById('al-min-euros')?.value, 100);
+  const minPct   = numOr(document.getElementById('al-min-pct')?.value,   15);
+  const minUds   = numOr(document.getElementById('al-min-uds')?.value,   6);
+  const minOpp   = numOr(document.getElementById('al-min-opp')?.value,   100);
   const cliente  = document.getElementById('al-cliente')?.value ?? '';
   const type     = alTypeFilter;
 
@@ -3277,6 +3345,11 @@ function renderAlertas() {
   }
 
   const { fGone, fRisk, fRef, fOpp } = applyAlFilters(raw);
+  // Ordenar por prioridad comercial (rojo primero) y luego por impacto
+  const priOrder = { red: 0, orange: 1, green: 2 };
+  const priSort = (a, b) => (priOrder[alertPriority(a)] - priOrder[alertPriority(b)]) || (a.sortKey - b.sortKey);
+  fRisk.sort(priSort);
+  fRef.sort(priSort);
   const total = fGone.length + fRisk.length + fRef.length + fOpp.length;
 
   // Nav badge
@@ -3284,19 +3357,43 @@ function renderAlertas() {
   else           { badge.style.display = 'none'; }
   syncAlertBadge();
 
-  // ── Summary cards ────────────────────────────────────────────────────────
-  const totalEuro = [...fGone, ...fRisk].reduce((s,a) => s + Math.abs(a.dif||0), 0);
-  const summaryHTML = `
+  // ── Summary cards con ROI comercial ──────────────────────────────────────
+  const nM = raw.meses.length;
+  // Impacto anual estimado de perdidos = facturación que tenían, anualizada
+  const impGone = anualiza(fGone.reduce((s,a)=>s+a.impB,0), nM);
+  // Facturación en riesgo = caída actual anualizada
+  const impRisk = anualiza(Math.abs(fRisk.reduce((s,a)=>s+a.dif,0)), nM);
+  // Potencial oportunidades = crecimiento actual anualizado
+  const impOpp  = anualiza(fOpp.reduce((s,a)=>s+a.dif,0), nM);
+
+  // KPI de prioridad: clientes ACTUAR HOY + su impacto
+  const todasAlertas = [...fGone, ...fRisk, ...fRef];
+  const hoy = todasAlertas.filter(a => alertPriority(a) === 'red');
+  const clientesHoy = new Set(hoy.map(a => a.cliente)).size;
+  const impactoHoy = anualiza(hoy.reduce((s,a)=>s + Math.abs(a.dif ?? 0), 0), nM);
+
+  const prioridadBanner = clientesHoy > 0 ? `
+    <div class="al-priority-banner">
+      <div class="al-pb-left">
+        <span class="al-pb-icon">🔴</span>
+        <div>
+          <div class="al-pb-title">Clientes prioritarios hoy: <strong>${clientesHoy}</strong></div>
+          <div class="al-pb-sub">Impacto económico asociado: <strong>${fmt(Math.round(impactoHoy))}</strong> anuales estimados</div>
+        </div>
+      </div>
+    </div>` : '';
+
+  const summaryHTML = prioridadBanner + `
     <div class="al-summary">
       <div class="al-sum-card t-gone">
-        <div class="al-sum-label">Desaparecidos</div>
+        <div class="al-sum-label">Perdidos</div>
         <div class="al-sum-val gone">${fGone.length}</div>
-        <div class="al-sum-sub">${fGone.length ? fmt(fGone.reduce((s,a)=>s+a.impB,0))+' perdidos' : 'ninguno'}</div>
+        <div class="al-sum-sub">${fGone.length ? 'Impacto anual est.: <strong style="color:var(--red)">'+fmt(Math.round(impGone))+'</strong>' : 'ninguno'}</div>
       </div>
       <div class="al-sum-card t-risk">
         <div class="al-sum-label">En riesgo</div>
         <div class="al-sum-val risk">${fRisk.length}</div>
-        <div class="al-sum-sub">${fRisk.length ? '−'+fmt(Math.abs(fRisk.reduce((s,a)=>s+a.dif,0))) : 'ninguno'}</div>
+        <div class="al-sum-sub">${fRisk.length ? 'Facturación en riesgo: <strong style="color:var(--orange)">'+fmt(Math.round(impRisk))+'</strong>' : 'ninguno'}</div>
       </div>
       <div class="al-sum-card t-ref">
         <div class="al-sum-label">Referencias</div>
@@ -3306,7 +3403,7 @@ function renderAlertas() {
       <div class="al-sum-card t-opp">
         <div class="al-sum-label">Oportunidades</div>
         <div class="al-sum-val opp">${fOpp.length}</div>
-        <div class="al-sum-sub">${fOpp.length ? '+'+fmt(fOpp.reduce((s,a)=>s+a.dif,0)) : 'ninguna'}</div>
+        <div class="al-sum-sub">${fOpp.length ? 'Potencial est.: <strong style="color:var(--green)">'+fmt(Math.round(impOpp))+'</strong>' : 'ninguna'}</div>
       </div>
     </div>
     <div class="al-tramo">📊 <strong>${raw.tramo}</strong></div>`;
@@ -3327,12 +3424,16 @@ function renderAlertas() {
     const absPct = Math.abs(a.pct);
     const pctCls = absPct >= 30 ? 'severe' : absPct >= 15 ? 'moderate' : 'positive';
     const isDown = a.dif < 0;
+    const pri = alertPriority(a);
+    const pm = PRIORITY_META[pri];
+    const priBadge = `<span class="al-pri-badge" style="background:${pm.bg};color:${pm.color};border:1px solid ${pm.border}">${pm.label}</span>`;
     return `
       <div class="al-card ${cls}">
         <div class="al-card-inner">
           <div class="al-card-icon">${icon}</div>
           <div class="al-card-body">
             <div class="al-card-top">
+              ${priBadge}
               <span class="al-type-badge ${cls}">${badge}</span>
               <span class="al-client-name">${a.cliente}</span>
             </div>
@@ -3359,12 +3460,16 @@ function renderAlertas() {
   }
 
   function refCard(a) {
+    const pri = alertPriority(a);
+    const pm = PRIORITY_META[pri];
+    const priBadge = `<span class="al-pri-badge" style="background:${pm.bg};color:${pm.color};border:1px solid ${pm.border}">${pm.label}</span>`;
     return `
       <div class="al-card ref">
         <div class="al-card-inner">
           <div class="al-card-icon">◎</div>
           <div class="al-card-body">
             <div class="al-card-top">
+              ${priBadge}
               <span class="al-type-badge ref">Referencia</span>
               <span class="al-client-name">${a.cliente}</span>
             </div>
@@ -3687,6 +3792,96 @@ function calcPerdidasRef(clienteRows) {
 /**
  * Venta cruzada inteligente: clientes con facturación similar (±40%) que compran productos que este cliente no compra.
  */
+// ── BENCHMARK COMERCIAL ──────────────────────────────────────────────────────
+/**
+ * Compara un cliente contra clientes de volumen similar (mismo tercil).
+ * Cálculos simples sobre datos existentes — sin IA ni APIs.
+ * @returns {object|null} { pctl, miTotal, avgSimilar, dif, oportunidad, nSimilares, segmento }
+ */
+function calcBenchmark(nombreCliente) {
+  const porCliente = groupBy(DB, 'cliente');
+  const totales = Object.entries(porCliente)
+    .map(([cl, rows]) => ({ cl, total: sumI(rowsUltimos12(rows)) }))
+    .filter(c => c.total > 0)
+    .sort((a, b) => a.total - b.total);
+
+  if (totales.length < 4) return null;
+  const me = totales.find(c => c.cl === nombreCliente);
+  if (!me) return null;
+
+  // Percentil del cliente
+  const idx = totales.indexOf(me);
+  const pctl = Math.round((idx / (totales.length - 1)) * 100);
+
+  // Segmento por terciles de volumen
+  const n = totales.length;
+  const t1 = totales[Math.floor(n / 3)].total;
+  const t2 = totales[Math.floor(2 * n / 3)].total;
+  let segmento, segLabel;
+  if (me.total <= t1)      { segmento = totales.filter(c => c.total <= t1); segLabel = 'volumen bajo'; }
+  else if (me.total <= t2) { segmento = totales.filter(c => c.total > t1 && c.total <= t2); segLabel = 'volumen medio'; }
+  else                     { segmento = totales.filter(c => c.total > t2); segLabel = 'volumen alto'; }
+
+  const otros = segmento.filter(c => c.cl !== nombreCliente);
+  if (!otros.length) return null;
+
+  const avgSimilar = otros.reduce((s, c) => s + c.total, 0) / otros.length;
+  const dif = me.total - avgSimilar;
+  const pctDif = avgSimilar > 0 ? (dif / avgSimilar) * 100 : 0;
+
+  return {
+    pctl, miTotal: me.total, avgSimilar, dif, pctDif,
+    oportunidad: Math.max(0, avgSimilar - me.total),
+    nSimilares: otros.length, segLabel
+  };
+}
+
+/**
+ * HTML de la tarjeta Benchmark Comercial.
+ */
+function benchmarkCardHTML(nombreCliente) {
+  const b = calcBenchmark(nombreCliente);
+  if (!b) return '';
+  const compra = b.dif >= 0 ? 'más' : 'menos';
+  const colorDif = b.dif >= 0 ? 'var(--green)' : 'var(--orange)';
+  const barPct = Math.max(4, Math.min(100, b.pctl));
+  return `
+    <div class="bmk-card">
+      <div class="bmk-header">
+        <span class="bmk-title">📊 Benchmark Comercial</span>
+        <span class="bmk-seg">${b.nSimilares} clientes similares (${b.segLabel})</span>
+      </div>
+      <div class="bmk-body">
+        <div class="bmk-row">
+          <div class="bmk-label">Posición en su segmento</div>
+          <div class="bmk-pctl-wrap">
+            <div class="bmk-pctl-bar"><div class="bmk-pctl-fill" style="width:${barPct}%"></div></div>
+            <span class="bmk-pctl-num">Percentil ${b.pctl}</span>
+          </div>
+        </div>
+        <div class="bmk-row">
+          <div class="bmk-label">Este cliente compra (12m)</div>
+          <div class="bmk-val">${fmt(Math.round(b.miTotal))}</div>
+        </div>
+        <div class="bmk-row">
+          <div class="bmk-label">Media de clientes similares</div>
+          <div class="bmk-val" style="color:var(--text2)">${fmt(Math.round(b.avgSimilar))}</div>
+        </div>
+        <div class="bmk-row">
+          <div class="bmk-label">Diferencia</div>
+          <div class="bmk-val" style="color:${colorDif}">${b.dif>=0?'+':'−'}${fmt(Math.round(Math.abs(b.dif)))} (${Math.abs(b.pctDif).toFixed(0)}% ${compra})</div>
+        </div>
+        ${b.oportunidad > 0 ? `
+        <div class="bmk-opp">
+          💡 Oportunidad estimada: <strong>+${fmt(Math.round(b.oportunidad))}</strong> hasta igualar la media de su segmento
+        </div>` : `
+        <div class="bmk-opp bmk-opp-good">
+          ⭐ Compra por encima de la media de su segmento — cliente referencia
+        </div>`}
+      </div>
+    </div>`;
+}
+
 function calcCrossSelling(clienteRows, nombreCliente) {
   const _cliente = nombreCliente || visitaCliente;
   const comprados = new Set(clienteRows.map(r => r.producto));
@@ -3910,6 +4105,7 @@ function renderVisita() {
         Prep. Visita · <span style="color:var(--text)">${visitaCliente}</span>
       </div>
       ${queVenderHTML}
+      ${benchmarkCardHTML(visitaCliente)}
       ${resumenHTML}
       ${vsecHTML('topnc',  '⭐', 'Top empresa que no compra',  top10missing.length+top20missing.length, '240,79,90',  topNoCompraHTML)}
       ${vsecHTML('repos',  '🔄', 'Compra habitual · semáforo',  reposicion.length,   '245,166,35', compraHabHTML)}
