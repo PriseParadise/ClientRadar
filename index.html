@@ -476,6 +476,38 @@ tbody tr:last-child td{border-bottom:none;}
 .qv-ref{font-size:13px;font-weight:600;color:var(--text);}
 .qv-reason{font-size:11px;color:var(--text3);margin-top:2px;}
 
+/* ── TOP 30 NACIONAL ─────────────────────────────────────────────────── */
+.t30-kpis{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:10px;align-items:center;padding:12px 14px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.t30-kpi{text-align:center;}
+.t30-kpi-val{font-size:22px;font-weight:800;font-family:var(--mono);line-height:1;}
+.t30-kpi-tot{font-size:13px;color:var(--text3);font-weight:600;}
+.t30-kpi-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:3px;}
+.t30-bar-wrap{grid-column:1 / -1;}
+.t30-bar{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.t30-bar-fill{height:7px;border-radius:4px;transition:width .4s;}
+.t30-row{gap:10px;}
+.t30-rank{flex-shrink:0;width:34px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red);}
+.t30-badge{background:rgba(240,79,90,.12);color:var(--red);}
+
+/* ── COMPRA HABITUAL (mejorada) ──────────────────────────────────────── */
+.ch-row{align-items:flex-start;}
+.ch-main{flex:1;min-width:0;}
+.ch-stats{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;}
+.ch-stats span{font-size:11px;color:var(--text3);white-space:nowrap;}
+
+/* ── PRODUCTOS TOP QUE NO COMPRA (ficha cliente) ─────────────────────── */
+.tnc-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.tnc-header{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.tnc-title{font-size:13px;font-weight:700;color:var(--text);}
+.tnc-sub{font-size:11px;color:var(--text3);}
+.tnc-list{display:flex;flex-direction:column;}
+.tnc-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);}
+.tnc-row:last-child{border-bottom:none;}
+.tnc-rank{flex-shrink:0;width:34px;font-family:var(--mono);font-size:13px;font-weight:700;}
+.tnc-name{flex:1;font-size:13px;color:var(--text);font-weight:500;min-width:0;}
+.tnc-fact{flex-shrink:0;font-size:12px;font-family:var(--mono);color:var(--text2);}
+.tnc-badge{flex-shrink:0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
+
 /* ── BLOQUES VISITA ─────────────────────────────────────────────────── */
 .vb-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);}
 .vb-row:last-child{border-bottom:none;}
@@ -3062,9 +3094,35 @@ function renderCliente() {
 
   const _bmkCard = benchmarkCardHTML(selectedClientName);
 
+  // ── Productos Top que este cliente NO compra (sobre top dinámico de mi histórico) ──
+  const _topOps = calcTopOportunidades(rowsAll);
+  const _topNoCompra = [..._topOps.top10missing, ..._topOps.top20missing];
+  const _topNoCompraCard = _topNoCompra.length ? `
+    <div class="tnc-card">
+      <div class="tnc-header">
+        <span class="tnc-title">📦 Productos Top que este cliente no compra</span>
+        <span class="tnc-sub">de tu Top 20 de ventas</span>
+      </div>
+      <div class="tnc-list">
+        ${_topNoCompra.slice(0,12).map(p => {
+          const isTop10 = p.rank <= 10;
+          const c = isTop10 ? 'var(--red)' : 'var(--orange)';
+          const bg = isTop10 ? 'rgba(240,79,90,.12)' : 'rgba(245,166,35,.12)';
+          return `
+          <div class="tnc-row">
+            <div class="tnc-rank" style="color:${c}">#${p.rank}</div>
+            <div class="tnc-name">${p.producto}</div>
+            <div class="tnc-fact">${fmtK(p.importe)} €</div>
+            <div class="tnc-badge" style="background:${bg};color:${c}">${isTop10?'Top 10':'Top 20'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
   cont.innerHTML = `
     ${_qvCard}
     ${_bmkCard}
+    ${_topNoCompraCard}
     ${tramoBanner}
     ${kpiHTML}
     ${bannerHTML}
@@ -3691,12 +3749,20 @@ function rowsUltimos12(clienteRows) {
  */
 function calcReposicion(clienteRows, rows12) {
   const prodMap = {};
-  // Consumo en últimos 12 meses
+  // Consumo en últimos 12 meses + nº de pedidos (meses distintos con compra)
   rows12.forEach(r => {
-    if (!prodMap[r.producto]) prodMap[r.producto] = { uds12: 0, imp12: 0 };
+    if (!prodMap[r.producto]) prodMap[r.producto] = { uds12: 0, imp12: 0, stamps: new Set() };
     prodMap[r.producto].uds12 += r.unidades || 0;
     prodMap[r.producto].imp12 += r.importe  || 0;
+    prodMap[r.producto].stamps.add(r.año * 12 + MESES_ORD.indexOf(r.mes));
   });
+  // Histórico completo para frecuencia media real
+  const histMap = {};
+  clienteRows.forEach(r => {
+    if (!histMap[r.producto]) histMap[r.producto] = new Set();
+    histMap[r.producto].add(r.año * 12 + MESES_ORD.indexOf(r.mes));
+  });
+
   const result = [];
   Object.entries(prodMap).forEach(([prod, data]) => {
     const consumoMensual = data.uds12 / 12;
@@ -3704,13 +3770,39 @@ function calcReposicion(clienteRows, rows12) {
     const last = lastBuyDate(clienteRows, prod);
     if (!last) return;
     const meses = mesesDesde(last.año, last.mes);
-    if (meses < 1) return;
-    const cantRec = Math.round(consumoMensual * meses);
-    if (cantRec < 1) return;
-    const ratio = meses / (12 / (data.uds12 / consumoMensual || 1));
-    const prioridad = meses >= 2 ? 'red' : meses >= 1 ? 'orange' : 'green';
-    const priLabel  = meses >= 2 ? '🔴 Alta' : meses >= 1 ? '🟡 Media' : '🟢 Baja';
-    result.push({ prod, uds12: data.uds12, imp12: data.imp12, consumoMensual, meses, cantRec, prioridad, priLabel, last });
+    const cantRec = Math.max(1, Math.round(consumoMensual * Math.max(meses, 1)));
+
+    // Nº de pedidos = meses distintos con compra (en 12m)
+    const nPedidos12 = data.stamps.size;
+    const udsPorPedido = nPedidos12 ? Math.round(data.uds12 / nPedidos12) : data.uds12;
+
+    // Frecuencia media de compra (en meses) sobre histórico completo
+    const histStamps = [...histMap[prod]].sort((a, b) => a - b);
+    let frecuencia = null;
+    if (histStamps.length >= 2) {
+      let suma = 0;
+      for (let i = 1; i < histStamps.length; i++) suma += histStamps[i] - histStamps[i - 1];
+      frecuencia = suma / (histStamps.length - 1);
+    }
+
+    // Semáforo: comparar días sin comprar con la frecuencia habitual
+    let prioridad, priLabel;
+    if (frecuencia) {
+      if (meses >= frecuencia * 1.5)      { prioridad = 'red';    priLabel = '🔴 Reposición pendiente'; }
+      else if (meses >= frecuencia * 0.9) { prioridad = 'orange'; priLabel = '🟠 Cerca de reposición'; }
+      else                                { prioridad = 'green';  priLabel = '🟢 Normal'; }
+    } else {
+      prioridad = meses >= 2 ? 'red' : meses >= 1 ? 'orange' : 'green';
+      priLabel  = meses >= 2 ? '🔴 Reposición pendiente' : meses >= 1 ? '🟠 Cerca de reposición' : '🟢 Normal';
+    }
+
+    result.push({
+      prod, uds12: data.uds12, imp12: data.imp12, consumoMensual, meses, cantRec,
+      prioridad, priLabel, last,
+      udsPorPedido, nPedidos12,
+      frecuencia: frecuencia ? frecuencia.toFixed(1) : null,
+      diasUltima: meses
+    });
   });
   return result.sort((a, b) => {
     const priOrder = { red: 0, orange: 1, green: 2 };
@@ -3746,6 +3838,84 @@ function calcRotura(clienteRows) {
     result.push({ prod, elapsed, avgInterval: avgInterval.toFixed(1), ratio: ratio.toFixed(2), riesgo, riesgoLabel, cantSug, last });
   });
   return result.sort((a,b) => parseFloat(b.ratio) - parseFloat(a.ratio)).slice(0, 15);
+}
+
+// ── TOP 30 NACIONAL ESI (lista estratégica fija) ────────────────────────────
+const TOP30_NACIONAL = [
+  "MELATONIN RETARD (60 MTABL) PURA 1,9 MG. ESI",
+  "MELATONINA JUNIOR GOTAS 1 MG (40 ML) ESI",
+  "MELATONIN GOTAS C/ERBE NOT.1,9MG (50ML) ESI",
+  "MELATONIN GOTAS SIN ERBE NOT.1,9MG(50ML) ESI",
+  "MELATONIN (60MTABL) PURA 1,9 MG. ESI",
+  "MELATONIN PURA SPRAY 1 MG (20 ML) ESI",
+  "COLON CLEANSE LAX DAY (30TABL.) ESI",
+  "COLON CLEANSE LAX - FORTE (30 TABL.) ESI",
+  "COLON CLEANSE LAX FLOR (30CAP.) ESI",
+  "FERMENTAL MAX (20 CAPS.) ESI",
+  "TRELAX (100TABL.) ESI",
+  "KARBOFIN FORTE (30CAP.) ESI",
+  "DIGESTIVAID NO ACID (12 TABL.) ESI",
+  "VITAMINA C 30 COMP PURA RETARD 1000 MG ESI",
+  "VITAMINA C PASTILLA BLANDA 50 GR ESI",
+  "VITAMINA D (30 MTABL) ESI",
+  "IMMUNILFLOR URTO 30 NATURCAPS ESI",
+  "IMMUNILFLOR (30CAP.) ESI",
+  "PASTILLA BLANDA JENGIBRE (50 GR) ESI",
+  "PROPOL. PASTILLA EUCALIPTO (50GR.) ESI",
+  "TUSSERBE 2 FLUID (JARABE) (180ML.) ESI",
+  "PROPOLAID PLUS 10 SOBRES ESI",
+  "BATTERIL 900 (30 TABLETAS) ESI",
+  "PROPOLGOLA MIEL MANUKA SPRAY ORAL 20 ML ESI",
+  "ACEITE ARBOL TE ESI 100% (10ML) ESI",
+  "NORMOLIP 5 (30 NATURCAPS) ESI",
+  "NORMOLIP 5 FORTE (36 COMPRIMIDOS) ESI",
+  "ERBAVEN FORTE 60 TABLETAS ESI",
+  "HEMOGEL 50 ML. ESI",
+  "GINKGOMAX (30TABL.) ESI",
+  "ALOE FRESH RETARD BLANQUEADOR (100ML.) ESI",
+];
+
+/**
+ * Normaliza un nombre de producto para comparar de forma laxa:
+ * mayúsculas, sin acentos, espacios colapsados, sin signos de puntuación sueltos.
+ */
+function normProd(s) {
+  return (s || '')
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Compara el cliente contra el Top 30 nacional fijo.
+ * @returns {object} { comprados:[], pendientes:[], nComprados, nPendientes, cobertura }
+ */
+function calcTop30Nacional(clienteRows) {
+  const compradosNorm = [...new Set(clienteRows.map(r => normProd(r.producto)))];
+  const comprados = [];
+  const pendientes = [];
+  const TOTAL = TOP30_NACIONAL.length;
+  TOP30_NACIONAL.forEach((prod, i) => {
+    const norm = normProd(prod);
+    // Coincidencia exacta, o inclusión bidireccional con umbral de longitud
+    // para tolerar sufijos/códigos del Excel sin falsos positivos.
+    const loCompra = compradosNorm.some(c =>
+      c === norm ||
+      (c.length > 14 && norm.length > 14 && (c.includes(norm) || norm.includes(c)))
+    );
+    const item = { producto: prod, rankNacional: i + 1 };
+    if (loCompra) comprados.push(item);
+    else pendientes.push(item);
+  });
+  const cobertura = Math.round((comprados.length / TOTAL) * 100);
+  return {
+    comprados, pendientes,
+    nComprados: comprados.length,
+    nPendientes: pendientes.length,
+    cobertura,
+    total: TOTAL
+  };
 }
 
 /**
@@ -3926,7 +4096,7 @@ function calcCrossSelling(clienteRows, nombreCliente) {
 
 // ── RENDER HELPERS ────────────────────────────────────────────────────────────
 
-function vsecHTML(id, icon, title, count, colorClass, bodyHTML) {
+function vsecHTML(id, icon, title, count, colorClass, bodyHTML, alwaysBody) {
   const cntBadge = count > 0
     ? `<span class="vsec-count" style="background:rgba(${colorClass},0.12);color:rgb(${colorClass})">${count}</span>`
     : `<span class="vsec-count">0</span>`;
@@ -3939,7 +4109,7 @@ function vsecHTML(id, icon, title, count, colorClass, bodyHTML) {
         <span class="vsec-toggle open" id="vtog-${id}">▾</span>
       </div>
       <div class="visita-section-body" id="vsec-${id}">
-        ${count === 0
+        ${(count === 0 && !alwaysBody)
           ? '<div style="padding:18px 16px;font-size:12px;color:var(--text3);text-align:center">Sin elementos detectados</div>'
           : bodyHTML}
       </div>
@@ -3985,6 +4155,7 @@ function renderVisita() {
     const reposicion  = calcReposicion(clienteRows, rows12);
     const perdidas    = calcPerdidasRef(clienteRows);
     const crossSell   = calcCrossSelling(clienteRows);
+    const top30       = calcTop30Nacional(clienteRows);
 
     // Potenciales
     const potTop      = [...top10missing,...top20missing].reduce((s,p)=>s+p.importe*0.02,0);
@@ -4059,19 +4230,28 @@ function renderVisita() {
           </div>`;
         }).join('');
 
-    // ── BLOQUE 2: COMPRA HABITUAL (reposición) ─────────────────────────────
+    // ── BLOQUE: COMPRA HABITUAL (con frecuencia, uds/pedido, días) ──────────
     const compraHabHTML = !reposicion.length
       ? '<div class="visita-empty-block">Sin referencias con histórico suficiente.</div>'
-      : reposicion.slice(0,10).map(r => `
-        <div class="vb-row">
-          <span class="vb-semaf" style="background:${r.prioridad==='red'?'var(--red)':r.prioridad==='orange'?'var(--orange)':'var(--green)'}"></span>
-          <div class="vb-name">${r.prod}</div>
-          <div class="vb-meta">Últ: ${r.last.label} · ${r.meses}m</div>
-          <div class="vb-right">
-            <div class="vb-uds">${r.cantRec} uds</div>
-            <div class="vb-badge" style="background:${r.prioridad==='red'?'rgba(240,79,90,.12)':r.prioridad==='orange'?'rgba(245,166,35,.12)':'rgba(52,199,123,.12)'};color:${r.prioridad==='red'?'var(--red)':r.prioridad==='orange'?'var(--orange)':'var(--green)'}">${r.priLabel}</div>
+      : reposicion.slice(0,12).map(r => {
+          const cDot = r.prioridad==='red'?'var(--red)':r.prioridad==='orange'?'var(--orange)':'var(--green)';
+          const cBg  = r.prioridad==='red'?'rgba(240,79,90,.12)':r.prioridad==='orange'?'rgba(245,166,35,.12)':'rgba(52,199,123,.12)';
+          const frecTxt = r.frecuencia ? `cada ${r.frecuencia}m` : 'irregular';
+          return `
+        <div class="vb-row ch-row">
+          <span class="vb-semaf" style="background:${cDot}"></span>
+          <div class="ch-main">
+            <div class="vb-name">${r.prod}</div>
+            <div class="ch-stats">
+              <span title="Unidades medias por pedido">📦 ${r.udsPorPedido} uds/pedido</span>
+              <span title="Frecuencia media de compra">🔁 ${frecTxt}</span>
+              <span title="Última compra">📅 ${r.last.label}</span>
+              <span title="Días/meses desde última compra" style="color:${cDot};font-weight:600">⏱ ${r.diasUltima}m sin pedir</span>
+            </div>
           </div>
-        </div>`).join('');
+          <div class="vb-badge" style="background:${cBg};color:${cDot}">${r.priLabel}</div>
+        </div>`;
+        }).join('');
 
     // ── BLOQUE 3: REFERENCIAS PERDIDAS ────────────────────────────────────
     const perdidasBHTML = !perdidas.length
@@ -4099,6 +4279,38 @@ function renderVisita() {
           </div>
         </div>`).join('');
 
+    // ── BLOQUE: TOP 30 NACIONAL NO COMPRADO ────────────────────────────────
+    const cobColor = top30.cobertura >= 60 ? 'var(--green)' : top30.cobertura >= 30 ? 'var(--orange)' : 'var(--red)';
+    const top30KpisHTML = `
+      <div class="t30-kpis">
+        <div class="t30-kpi">
+          <div class="t30-kpi-val" style="color:var(--green)">${top30.nComprados}<span class="t30-kpi-tot">/${top30.total}</span></div>
+          <div class="t30-kpi-lbl">Comprados</div>
+        </div>
+        <div class="t30-kpi">
+          <div class="t30-kpi-val" style="color:var(--red)">${top30.nPendientes}<span class="t30-kpi-tot">/${top30.total}</span></div>
+          <div class="t30-kpi-lbl">Pendientes</div>
+        </div>
+        <div class="t30-kpi">
+          <div class="t30-kpi-val" style="color:${cobColor}">${top30.cobertura}%</div>
+          <div class="t30-kpi-lbl">Cobertura Top 30</div>
+        </div>
+        <div class="t30-bar-wrap">
+          <div class="t30-bar"><div class="t30-bar-fill" style="width:${top30.cobertura}%;background:${cobColor}"></div></div>
+        </div>
+      </div>`;
+
+    const top30ListHTML = !top30.pendientes.length
+      ? '<div class="visita-empty-block" style="color:var(--green)">⭐ ¡Cobertura completa! Este cliente compra todo el Top nacional.</div>'
+      : top30.pendientes.map(p => `
+        <div class="vb-row t30-row">
+          <div class="t30-rank">#${p.rankNacional}</div>
+          <div class="vb-name">${p.producto}</div>
+          <div class="vb-badge t30-badge">Pendiente</div>
+        </div>`).join('');
+
+    const top30HTML = top30KpisHTML + top30ListHTML;
+
     // ── MONTAR ────────────────────────────────────────────────────────────
     cont.innerHTML = `
       <div style="margin-bottom:6px;font-size:13px;font-weight:500;color:var(--text2)">
@@ -4107,10 +4319,11 @@ function renderVisita() {
       ${queVenderHTML}
       ${benchmarkCardHTML(visitaCliente)}
       ${resumenHTML}
-      ${vsecHTML('topnc',  '⭐', 'Top empresa que no compra',  top10missing.length+top20missing.length, '240,79,90',  topNoCompraHTML)}
-      ${vsecHTML('repos',  '🔄', 'Compra habitual · semáforo',  reposicion.length,   '245,166,35', compraHabHTML)}
-      ${vsecHTML('perd',   '↩',  'Referencias perdidas',        perdidas.length,     '245,166,35', perdidasBHTML)}
-      ${vsecHTML('cross',  '⇄',  'Venta cruzada',               crossSell.length,    '79,124,255', crossBHTML)}`;
+      ${vsecHTML('top30', '🇪🇸', 'TOP 30 NACIONAL no comprado',  top30.nPendientes, '240,79,90',  top30HTML, true)}
+      ${vsecHTML('topnc', '⭐', 'Top empresa que no compra',     top10missing.length+top20missing.length, '245,166,35', topNoCompraHTML)}
+      ${vsecHTML('repos', '🔄', 'Compra habitual · semáforo',    reposicion.length,   '52,199,123', compraHabHTML)}
+      ${vsecHTML('perd',  '↩',  'Referencias perdidas',          perdidas.length,     '245,166,35', perdidasBHTML)}
+      ${vsecHTML('cross', '⇄',  'Venta cruzada',                 crossSell.length,    '79,124,255', crossBHTML)}`;
 
   }, 50);
 }
