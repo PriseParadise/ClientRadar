@@ -1516,7 +1516,7 @@ async function doLogin() {
 
   err.textContent = 'Entrando…';
   const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
-  if (error) {
+ if (error) {
     // Check if admin master password override
    if (error) {
   err.textContent = 'Email o contraseña incorrectos';
