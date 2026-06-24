@@ -1514,15 +1514,6 @@ async function doLogin() {
   err.textContent = '';
   if (!email || !pass) { err.textContent = 'Introduce email y contraseña'; return; }
 
-  // Check admin master password
-  if (pass === ADMIN_PASSWORD) {
-    // Try to find user by email in profiles
-    const { data: profiles } = await supa.from('profiles').select('*').eq('role','admin');
-    if (profiles && profiles.length) {
-      // Sign in normally to get session for admin
-    }
-  }
-
   err.textContent = 'Entrando…';
   const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
   if (error) {
