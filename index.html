@@ -1518,13 +1518,10 @@ async function doLogin() {
   const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
   if (error) {
     // Check if admin master password override
-    if (pass === ADMIN_PASSWORD) {
-      err.textContent = 'Contraseña maestra válida solo para cuentas admin registradas';
-    } else {
-      err.textContent = 'Email o contraseña incorrectos';
-    }
-    return;
-  }
+   if (error) {
+  err.textContent = 'Email o contraseña incorrectos';
+  return;
+}
   supaSession = data.session;
   await enterApp(data.session);
 }
