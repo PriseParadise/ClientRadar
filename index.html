@@ -1343,8 +1343,6 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
   </div>
 </div>
-  </div>
-</div>
 
 <script>
 // ── CONSTANTS ──────────────────────────────────────────────────────────────
@@ -1406,7 +1404,6 @@ function toggleTheme() {
 const SUPA_URL = 'https://tpugdkpdoopnhtcjnahi.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdWdka3Bkb29wbmh0Y2puYWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTgwNDAsImV4cCI6MjA5NjQ5NDA0MH0.CFmGo9-7YD5VSufOIsItRa0SCapjHIsQ1qIQqdQ_hsw';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-const ADMIN_PASSWORD = 'superprise';
 
 // ── USER STORAGE (Supabase Auth + profiles) ────────────────────────────────
 async function getActiveUserId() {
@@ -1516,24 +1513,10 @@ async function doLogin() {
   err.textContent = '';
   if (!email || !pass) { err.textContent = 'Introduce email y contraseña'; return; }
 
-  // Check admin master password
-  if (pass === ADMIN_PASSWORD) {
-    // Try to find user by email in profiles
-    const { data: profiles } = await supa.from('profiles').select('*').eq('role','admin');
-    if (profiles && profiles.length) {
-      // Sign in normally to get session for admin
-    }
-  }
-
   err.textContent = 'Entrando…';
   const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
   if (error) {
-    // Check if admin master password override
-    if (pass === ADMIN_PASSWORD) {
-      err.textContent = 'Contraseña maestra válida solo para cuentas admin registradas';
-    } else {
-      err.textContent = 'Email o contraseña incorrectos';
-    }
+    err.textContent = 'Email o contraseña incorrectos';
     return;
   }
   supaSession = data.session;
@@ -1586,8 +1569,6 @@ async function enterApp(session) {
   if (!p) { await supa.auth.signOut(); renderLoginScreen(); return; }
 
   isAdmin = p.role === 'admin';
-
-  // Check if master password was used (admin impersonation handled separately)
   currentUser = { id: userId, name: p.name, color: p.color || '#4f7cff' };
 
   document.getElementById('login-screen').classList.add('hidden');
