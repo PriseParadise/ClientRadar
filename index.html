@@ -474,13 +474,13 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .bottom-nav-inner {
   display: grid;
-  grid-template-columns: repeat(5,1fr);
+  grid-template-columns: repeat(6,1fr);
   height: var(--bottom-nav-h);
 }
 .bn-item {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 3px; cursor: pointer; color: var(--text3); transition: color .15s;
-  font-size: 10px; font-weight: 500; padding: 4px 2px;
+  font-size: 9px; font-weight: 500; padding: 4px 1px;
   min-height: var(--touch-min);
   user-select: none; -webkit-tap-highlight-color: transparent;
   position: relative;
@@ -834,6 +834,9 @@ tbody tr:last-child td{border-bottom:none;}
       </div>
       <div class="bn-item" id="bn-visita" onclick="goTo('visita',this);syncBottomNav('visita')" style="position:relative">
         <span class="bn-icon">⊕</span><span>Visita</span>
+      </div>
+      <div class="bn-item" id="bn-informes" onclick="goTo('informes',this);syncBottomNav('informes')" style="position:relative">
+        <span class="bn-icon">📄</span><span>Informes</span>
       </div>
       <div class="bn-item" id="bn-importar" onclick="goTo('importar',this);syncBottomNav('importar')" style="position:relative">
         <span class="bn-icon">↑</span><span>Importar</span>
