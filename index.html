@@ -1132,7 +1132,8 @@ tbody tr:last-child td{border-bottom:none;}
             <div class="prop-config">
               <div class="inf-field" style="flex:2;min-width:200px">
                 <label>Cliente</label>
-                <select id="inf-prop-cliente"></select>
+                <input type="text" id="inf-prop-cliente" list="inf-prop-cliente-list" placeholder="Escribe el nombre del cliente…" autocomplete="off" style="width:100%">
+                <datalist id="inf-prop-cliente-list"></datalist>
               </div>
               <button class="btn btn-primary" onclick="buildPropuestaPedido()">Generar propuesta</button>
             </div>
@@ -4237,11 +4238,10 @@ function buildPdfHtml(r,inline=false){
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initPropuestaPanel() {
-  const sel = document.getElementById('inf-prop-cliente');
-  if (!sel || !DB.length) return;
+  const dl = document.getElementById('inf-prop-cliente-list');
+  if (!dl || !DB.length) return;
   const clientes = [...new Set(DB.map(r => r.cliente))].sort();
-  sel.innerHTML = '<option value="">— selecciona cliente —</option>' +
-    clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+  dl.innerHTML = clientes.map(c => `<option value="${c}">`).join('');
 }
 
 function buildPropuestaPedido() {
